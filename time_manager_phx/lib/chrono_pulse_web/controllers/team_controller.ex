@@ -37,4 +37,8 @@ defmodule ChronoPulseWeb.TeamController do
       send_resp(conn, :no_content, "")
     end
   end
+  def by_manager(conn, %{"manager_id" => manager_id}) do
+    teams = Teams.list_teams_by_manager(manager_id)
+    render(conn, :index, teams: teams)
+  end
 end

@@ -16,6 +16,23 @@ defmodule ChronoPulse.Teams do
     |> Repo.preload([:manager, :employees])
   end
 
+  # Get all teams managed by a given user
+  def list_teams_by_manager(manager_id) do
+    Team
+    |> where([t], t.manager_id == ^manager_id)
+    |> Repo.all()
+    |> Repo.preload([:manager, :employees])
+  end
+
+  # (Optional) Get all teams where a user is an employee
+  def list_teams_by_employee(employee_id) do
+    Team
+    |> join(:inner, [t], e in assoc(t, :employees))
+    |> where([_t, e], e.id == ^employee_id)
+    |> Repo.all()
+    |> Repo.preload([:manager, :employees])
+  end
+
   # Create team and preload associations
   def create_team(attrs \\ %{}) do
     %Team{}

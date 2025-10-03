@@ -26,6 +26,7 @@ defmodule ChronoPulseWeb.Router do
     post "/complaints", UserComplaintController, :create
     post "/chat", ChatController, :create
     resources "/teams", TeamController, except: [:new, :edit]
+    get "/managers/:manager_id/teams", TeamController, :by_manager
   end
 
   # Enable Swoosh mailbox preview in development
