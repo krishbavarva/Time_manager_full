@@ -17,6 +17,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usersApi } from '../api/users'
 import LoginPage from '../components/loginPage.vue'
+import { getCurrentLocation } from '../utils/geolocation'
 
 const router = useRouter()
 const loading = ref(false)
@@ -42,8 +43,23 @@ const handleSignin = async ({ email, password }) => {
   const user = users.value.find(u => u.email === email)
   if (!user) { loginError.value = 'Invalid email'; return }
   if (!password) { loginError.value = 'Please enter password'; return }
-  localStorage.setItem('currentUser', JSON.stringify(user))
-  router.push('/dashboard')
+  
+  try {
+    // Request location permission
+    loginError.value = 'Getting your location...';
+    await getCurrentLocation();
+    
+    // Store user data and redirect
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    router.push('/dashboard');
+  } catch (error) {
+    console.warn('Location access was not granted, continuing without location data');
+    // Continue with login even if location access is denied
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    router.push('/dashboard');
+  } finally {
+    loginError.value = '';
+  }
 }
 
 const onSwitchPage = (page) => {

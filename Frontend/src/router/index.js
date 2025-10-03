@@ -7,6 +7,7 @@ const DashboardView = () => import('../views/DashboardView.vue')
 const UsersView = () => import('../views/UsersView.vue')
 const WorkingTimesView = () => import('../views/WorkingTimesView.vue')
 const ClockinsView = () => import('../views/ClockinsView.vue')
+const ChatView = () => import('../views/ChatView.vue')
 
 const routes = [
   { path: '/', redirect: '/login' },
@@ -16,6 +17,7 @@ const routes = [
   { path: '/users', name: 'users', component: UsersView },
   { path: '/working-times', name: 'working-times', component: WorkingTimesView },
   { path: '/clockins', name: 'clockins', component: ClockinsView },
+  { path: '/chat', name: 'chat', component: ChatView },
 ]
 
 export const router = createRouter({

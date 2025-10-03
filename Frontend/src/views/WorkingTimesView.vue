@@ -1,59 +1,59 @@
 <template>
   <section>
     <h1>Daily Schedule</h1>
-    <div class="card">
-      <h2>Set Your Weekly Schedule</h2>
-      <p class="hint">Define your regular working hours for each day of the week.</p>
+      <div class="card">
+        <h2>Set Your Weekly Schedule</h2>
+        <p class="hint">Define your regular working hours for each day of the week.</p>
+        
+        <form class="schedule-form" @submit.prevent="saveSchedule">
+          <div v-for="day in daysOfWeek" :key="day" class="day-schedule">
+            <label class="day-label">
+              <input type="checkbox" v-model="schedule[day].enabled" />
+              {{ day }}
+            </label>
+            <div class="time-inputs" v-if="schedule[day].enabled">
+              <input 
+                type="time" 
+                v-model="schedule[day].startTime"
+                :disabled="!schedule[day].enabled"
+                required
+              />
+              <span>to</span>
+              <input 
+                type="time" 
+                v-model="schedule[day].endTime"
+                :disabled="!schedule[day].enabled"
+                required
+              />
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" :disabled="saving">
+              {{ saving ? 'Saving...' : 'Save Schedule' }}
+            </button>
+          </div>
+        </form>
       
-      <form class="schedule-form" @submit.prevent="saveSchedule">
-        <div v-for="day in daysOfWeek" :key="day" class="day-schedule">
-          <label class="day-label">
-            <input type="checkbox" v-model="schedule[day].enabled" />
-            {{ day }}
-          </label>
-          <div class="time-inputs" v-if="schedule[day].enabled">
-            <input 
-              type="time" 
-              v-model="schedule[day].startTime" 
-              :disabled="!schedule[day].enabled"
-              required
-            />
-            <span>to</span>
-            <input 
-              type="time" 
-              v-model="schedule[day].endTime" 
-              :disabled="!schedule[day].enabled"
-              required
-            />
-          </div>
-        </div>
-        <div class="form-actions">
-          <button type="submit" :disabled="saving">
-            {{ saving ? 'Saving...' : 'Save Schedule' }}
-          </button>
-        </div>
-      </form>
-
-      <h2>Upcoming Schedule</h2>
-      <p v-if="loading">Loading schedule...</p>
-      <p v-else-if="Object.keys(upcomingSchedule).length === 0" class="no-data">
-        No upcoming schedule. Please set your weekly schedule above.
-      </p>
-      <div v-else class="upcoming-schedule">
+          <h2>Upcoming Schedule</h2>
+          <p v-if="loading">Loading schedule...</p>
+          <p v-else-if="Object.keys(upcomingSchedule).length === 0" class="no-data">
+            No upcoming schedule. Please set your weekly schedule above.
+          </p>
+          <div v-else class="upcoming-schedule">
         <div v-for="(item, date) in upcomingSchedule" :key="date" class="schedule-item">
-          <div class="schedule-date">
+              <div class="schedule-date">
             {{ formatScheduleDate(date) }}
-            <span v-if="!item.isWithinWorkingHours" class="warning-badge" title="Outside working hours (9 AM - 5 PM)">⚠️</span>
-          </div>
-          <div class="schedule-time">
-            {{ formatTime(item.startTime) }} - {{ formatTime(item.endTime) }}
-            <span class="schedule-duration" :class="{ 'overtime': item.workingMinutes > 8 * 60 }">
-              ({{ item.formattedDuration }} {{ item.workingMinutes > 8 * 60 ? '⚠️ Overtime' : '' }})
-            </span>
+                       <!-- <span v-if="!item.isWithinWorkingHours" class="warning-badge" title="Outside working hours (9 AM - 5 PM)">⚠️</span> -->
+              </div>
+              <div class="schedule-time">
+                {{ formatTime(item.startTime) }} - {{ formatTime(item.endTime) }}
+                <span class="schedule-duration">
+                  ({{ item.formattedDuration }})
+                </span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
   </section>
   
   <!-- Notification Component -->
@@ -310,41 +310,38 @@ const formatScheduleDate = (dateStr) => {
   })
 }
 
-// Check if time is within working hours (9 AM to 5 PM)
+// Check if a time is within standard working hours (9 AM to 5 PM)
 const isWithinWorkingHours = (time) => {
   if (!time) return false
-  const [hours, minutes] = time.split(':').map(Number)
-  const totalMinutes = hours * 60 + minutes
-  // Working hours: 9:00 AM to 5:00 PM (540 to 1020 in minutes)
-  return totalMinutes >= 540 && totalMinutes <= 1020
+  try {
+    const [hours, minutes] = time.split(':').map(Number)
+    const totalMinutes = hours * 60 + minutes
+    // Standard working hours: 9:00 AM to 5:00 PM (540 to 1020 in minutes)
+    return totalMinutes >= 540 && totalMinutes <= 1020
+  } catch (e) {
+    console.error('Error checking working hours for time:', time, e)
+    return false
+  }
 }
 
-// Calculate working minutes between two times (only counts 9 AM to 5 PM)
+// Calculate working minutes between two times
 const getWorkingMinutes = (start, end) => {
   if (!start || !end) return 0
   
-  const [startHour, startMinute] = start.split(':').map(Number)
-  const [endHour, endMinute] = end.split(':').map(Number)
-  
-  // Convert to minutes since midnight
-  let startTotal = startHour * 60 + startMinute
-  let endTotal = endHour * 60 + endMinute
-  
-  // If end time is before start time, it's on the next day
-  if (endTotal < startTotal) endTotal += 24 * 60
-  
-  // Define working hours (9 AM to 5 PM in minutes)
-  const workStart = 9 * 60   // 9:00 AM
-  const workEnd = 17 * 60    // 5:00 PM
-  
-  // If completely outside working hours
-  if (endTotal <= workStart || startTotal >= workEnd) return 0
-  
-  // Adjust start and end to be within working hours
-  const adjustedStart = Math.max(startTotal, workStart)
-  const adjustedEnd = Math.min(endTotal, workEnd)
-  
-  return Math.max(0, adjustedEnd - adjustedStart)
+  try {
+    const startDate = new Date()
+    const startTime = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), ...start.split(':').map(Number))
+    const endTime = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), ...end.split(':').map(Number))
+    
+    // Calculate total minutes (handling overnight)
+    const totalMinutes = Math.abs(endTime - startTime) / 60000
+    
+    // Return the actual time difference in minutes
+    return totalMinutes
+  } catch (e) {
+    console.error('Error calculating working minutes:', { start, end }, e)
+    return 0
+  }
 }
 
 // Format minutes into hours and minutes
@@ -542,23 +539,116 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.working-times-view {
+  background-color: #ffffff;
+  color: #000000;
+  min-height: 100%;
+  padding: 1rem;
+}
+
 .card { 
   margin-top: 1rem; 
   padding: 1.5rem; 
-  background: #111827; 
-  border: 1px solid #374151; 
-  border-radius: 12px; 
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  background: #ffffff; 
+  border: 1px solid #e5e7eb; 
+  border-radius: 8px; 
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+h1 {
+  color: #111827;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
 }
 
 h2 {
-  margin: 1.5rem 0 1rem;
+  margin: 0 0 1.5rem;
   font-size: 1.25rem;
-  color: #e5e7eb;
+  font-weight: 600;
+  color: #111827;
+}
+
+.text-muted {
+  color: #6b7280;
+  font-size: 0.9375rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: #2563eb;
+  color: white;
+  border: 1px solid transparent;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+.btn-outline {
+  background-color: white;
+  border: 1px solid #d1d5db;
+  color: #374151;
+}
+
+.btn-outline:hover {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-control {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #111827;
+  background-color: #ffffff;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.border {
+  border-color: #e5e7eb;
+}
+
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+.text-gray-400 {
+  color: #9ca3af;
+}
+
+.text-gray-500 {
+  color: #000000;
+}
+
+.text-blue-600 {
+  color: #252525;
 }
 
 .hint {
-  color: #9ca3af;
+  color: #111111;
   margin-bottom: 1.5rem;
   font-size: 0.9rem;
 }
@@ -579,7 +669,7 @@ h2 {
   align-items: center;
   width: 120px;
   font-weight: 500;
-  color: #e5e7eb;
+  color: #000000;
 }
 
 .day-label input[type="checkbox"] {
@@ -597,13 +687,13 @@ h2 {
   padding: 0.5rem 0.75rem;
   border-radius: 6px;
   border: 1px solid #374151;
-  background: #0b0f17;
-  color: #e5e7eb;
+  background: #ffffff;
+  color: #000000;
   font-size: 0.9rem;
 }
 
 .time-inputs span {
-  color: #9ca3af;
+  color: #000000;
   font-size: 0.9rem;
 }
 
@@ -646,7 +736,7 @@ h2 {
   padding: 1rem;
   display: flex;
   align-items: center;
-  border-bottom: 1px solid #2d3748;
+  border-bottom: 1px solid #252525;
   background: rgba(255, 255, 255, 0.02);
 }
 
@@ -655,9 +745,9 @@ h2 {
 }
 
 .schedule-date {
-  width: 120px;
+  width: 40%;
   font-weight: 500;
-  color: #e5e7eb;
+  color: #000000;
 }
 
 .schedule-time {
@@ -665,7 +755,7 @@ h2 {
 
 .schedule-duration {
   font-size: 0.9em;
-  color: #9ca3af;
+  color: #505050;
   margin-left: 0.5rem;
 }
 
