@@ -5,17 +5,10 @@ defmodule ChronoPulse.Accounts do
 
   import Ecto.Query, warn: false
   alias ChronoPulse.Repo
-
   alias ChronoPulse.Accounts.User
 
   @doc """
   Returns the list of users.
-
-  ## Examples
-
-      iex> list_users()
-      [%User{}, ...]
-
   """
   def list_users do
     Repo.all(User)
@@ -49,32 +42,14 @@ defmodule ChronoPulse.Accounts do
   end
 
   @doc """
-  Gets a single user.
-
+  Gets a single user by ID.
   Raises `Ecto.NoResultsError` if the User does not exist.
-
-  ## Examples
-
-      iex> get_user!(123)
-      %User{}
-
-      iex> get_user!(456)
-      ** (Ecto.NoResultsError)
-
   """
   def get_user!(id), do: Repo.get!(User, id)
 
   @doc """
   Creates a user.
-
-  ## Examples
-
-      iex> create_user(%{field: value})
-      {:ok, %User{}}
-
-      iex> create_user(%{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
+  Ensures password is hashed and type is validated.
   """
   def create_user(attrs) do
     %User{}
@@ -84,15 +59,7 @@ defmodule ChronoPulse.Accounts do
 
   @doc """
   Updates a user.
-
-  ## Examples
-
-      iex> update_user(user, %{field: new_value})
-      {:ok, %User{}}
-
-      iex> update_user(user, %{field: bad_value})
-      {:error, %Ecto.Changeset{}}
-
+  Will also re-hash password if provided in attrs.
   """
   def update_user(%User{} = user, attrs) do
     user
@@ -102,15 +69,6 @@ defmodule ChronoPulse.Accounts do
 
   @doc """
   Deletes a user.
-
-  ## Examples
-
-      iex> delete_user(user)
-      {:ok, %User{}}
-
-      iex> delete_user(user)
-      {:error, %Ecto.Changeset{}}
-
   """
   def delete_user(%User{} = user) do
     Repo.delete(user)
@@ -118,14 +76,30 @@ defmodule ChronoPulse.Accounts do
 
   @doc """
   Returns an `%Ecto.Changeset{}` for tracking user changes.
-
-  ## Examples
-
-      iex> change_user(user)
-      %Ecto.Changeset{data: %User{}}
-
   """
   def change_user(%User{} = user, attrs \\ %{}) do
     User.changeset(user, attrs)
+  end
+
+  @doc """
+  Authenticate a user by email/username and password.
+  Returns `{:ok, user}` if valid, otherwise `{:error, :unauthorized}`.
+  """
+  def authenticate_user(identifier, password) when is_binary(identifier) and is_binary(password) do
+    user =
+      Repo.get_by(User, email: identifier) ||
+      Repo.get_by(User, username: identifier)
+
+    cond do
+      user && Bcrypt.verify_pass(password, user.hashed_password) ->
+        {:ok, user}
+
+      user ->
+        {:error, :unauthorized}
+
+      true ->
+        Bcrypt.no_user_verify()
+        {:error, :unauthorized}
+    end
   end
 end

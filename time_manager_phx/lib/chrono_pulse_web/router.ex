@@ -25,6 +25,7 @@ defmodule ChronoPulseWeb.Router do
     get "/charts/user/:user_id/breaks", ChartsController, :user_breaks
     post "/complaints", UserComplaintController, :create
     post "/chat", ChatController, :create
+    resources "/teams", TeamController, except: [:new, :edit]
   end
 
   # Enable Swoosh mailbox preview in development
