@@ -42,6 +42,9 @@
         <p v-if="loginError" class="error-message">{{ loginError }}</p>
       </div>
       <button type="submit" class="submit-button">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"></path>
+        </svg>
         Sign In
       </button>
     </form>
@@ -108,85 +111,217 @@ export default {
   font-weight: bold;
   margin-bottom: 1.5rem;
   text-align: center;
-  color: #2dd4bf;
+  color: #111827;
 }
 .input-group {
   margin-bottom: 1rem;
 }
 .input-label {
   display: block;
-  color: #d1d5db;
+  color: #374151;
   font-size: 0.875rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
 .input-field {
   width: 100%;
-  padding: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  background-color: #374151;
-  color: #ffffff;
-  border: 1px solid #4b5563;
+  background-color: #ffffff;
+  color: #111827;
+  border: 1px solid #d1d5db;
   transition: all 0.3s ease;
+  font-size: 1rem;
 }
 .input-field:focus {
-  border-color: #2dd4bf;
+  border-color: #2563eb;
   outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 .error-message {
-  color: #f87171;
+  color: #dc2626;
   font-size: 0.75rem;
   margin-top: 0.5rem;
 }
 .submit-button {
   width: 100%;
-  background-color: #10b981;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
   color: #ffffff;
   font-weight: bold;
-  padding: 0.75rem 1rem;
-  border-radius: 0.75rem;
-  transition: background-color 0.3s ease;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  border: 2px solid transparent;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease-in-out infinite;
 }
+
+.submit-button::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg,
+    #2563eb,
+    #1d4ed8,
+    #3b82f6,
+    #60a5fa,
+    #2563eb,
+    #1d4ed8
+  );
+  border-radius: 0.75rem;
+  z-index: -1;
+  animation: glowingBorder 2s linear infinite;
+  background-size: 400% 400%;
+}
+
+.submit-button::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 70%
+  );
+  border-radius: 0.75rem;
+  z-index: -1;
+  animation: lightningMove 1.5s ease-in-out infinite;
+  opacity: 0.8;
+}
+
 .submit-button:hover {
-  background-color: #059669;
+  background-position: right center;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
+}
+
+.submit-button:hover::before {
+  animation-duration: 1s;
+}
+
+.submit-button:hover::after {
+  animation-duration: 1s;
+  opacity: 1;
+}
+
+.submit-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3), 0 4px 8px rgba(37, 99, 235, 0.2);
+}
+
+.submit-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  animation: none;
+}
+
+.submit-button:disabled::before,
+.submit-button:disabled::after {
+  animation: none;
+  opacity: 0.5;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: left center;
+  }
+  50% {
+    background-position: right center;
+  }
+}
+
+@keyframes glowingBorder {
+  0%, 100% {
+    background-position: 0% 50%;
+    opacity: 0.8;
+  }
+  50% {
+    background-position: 100% 50%;
+    opacity: 1;
+  }
+}
+
+@keyframes lightningMove {
+  0% {
+    background-position: -200% 0;
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    background-position: 200% 0;
+    opacity: 0;
+  }
 }
 .link-text {
   margin-top: 1rem;
   text-align: center;
-  color: #9ca3af;
+  color: #6b7280;
 }
 .link-anchor {
-  color: #2dd4bf;
+  color: #2563eb;
   text-decoration: none;
+  font-weight: 500;
 }
 .link-anchor:hover {
+  color: #1d4ed8;
   text-decoration: underline;
 }
 
 /* Additional styles for user picker */
 .users-list { margin-top: 0.5rem; }
-.hint { color: #9ca3af; font-size: 0.875rem; }
-.loading { color: #d1d5db; }
+.hint { color: #6b7280; font-size: 0.875rem; }
+.loading { color: #6b7280; }
 .user-chips { display: flex; flex-direction: column; gap: 0.5rem; }
 .user-chip {
   width: 100%;
   text-align: left;
-  background-color: #374151;
-  color: #ffffff;
+  background-color: #ffffff;
+  color: #111827;
   padding: 0.75rem 1rem;
   border-radius: 0.5rem;
-  border: 1px solid #4b5563;
-  transition: background-color 0.2s ease;
+  border: 1px solid #e5e7eb;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 0.875rem;
 }
-.user-chip:hover { background-color: #4b5563; }
-.user-chip .email { display: block; font-size: 0.875rem; color: #d1d5db; }
+.user-chip:hover {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+.user-chip .email {
+  display: block;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
 
 .selected-user {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  background-color: #1f2937;
-  border: 1px solid #374151;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   padding: 0.75rem;
   margin-bottom: 1rem;
@@ -198,12 +333,33 @@ export default {
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 9999px;
-  background-color: #14b8a6;
-  color: #111827;
+  background-color: #2563eb;
+  color: #ffffff;
   font-weight: 700;
+  font-size: 0.875rem;
 }
-.selected-user .user-meta .name { color: #fff; font-weight: 600; }
-.selected-user .user-meta .email { color: #d1d5db; font-size: 0.875rem; }
-.selected-user .change-user { color: #38bdf8; font-size: 0.875rem; }
-.selected-user .change-user:hover { text-decoration: underline; }
+.selected-user .user-meta .name {
+  color: #111827;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+.selected-user .user-meta .email {
+  color: #6b7280;
+  font-size: 0.75rem;
+}
+.selected-user .change-user {
+  color: #2563eb;
+  font-size: 0.875rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+}
+.submit-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
 </style>

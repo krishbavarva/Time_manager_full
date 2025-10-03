@@ -12,32 +12,17 @@
     <main class="content">
       <RouterView />
     </main>
-    <ChatBot />
   </div>
 </template>
 
 <script setup>
 import { RouterLink, RouterView } from 'vue-router';
-import ChatBot from '@/components/ChatBot.vue';
+
+console.log('✅ App.vue component loaded')
 </script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-@import '@/assets/styles/shared.css';
-
-:root {
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --text: #111827;
-  --text-muted: #6b7280;
-  --border: #e5e7eb;
-  --bg: #f9fafb;
-  --card-bg: #ffffff;
-  --success: #10b981;
-  --warning: #f59e0b;
-  --danger: #ef4444;
-  --info: #3b82f6;
-}
 
 * {
   box-sizing: border-box;
@@ -49,8 +34,8 @@ html, body, #app {
   height: 100%;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.5;
-  color: var(--text);
-  background-color: var(--bg);
+  color: #111827;
+  background-color: #f9fafb;
 }
 
 #app {
@@ -61,12 +46,12 @@ html, body, #app {
 
 /* Top Navigation */
 .topbar {
-  background-color: var(--card-bg);
+  background-color: #ffffff;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   position: sticky;
   top: 0;
   z-index: 50;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid #e5e7eb;
 }
 
 .nav {
@@ -79,7 +64,7 @@ html, body, #app {
 }
 
 .nav a {
-  color: var(--text);
+  color: #111827;
   text-decoration: none;
   font-weight: 500;
   font-size: 0.9375rem;
@@ -89,11 +74,11 @@ html, body, #app {
 }
 
 .nav a:hover {
-  color: var(--primary);
+  color: #2563eb;
 }
 
 .nav a.router-link-active {
-  color: var(--primary);
+  color: #2563eb;
   font-weight: 600;
 }
 
@@ -104,7 +89,7 @@ html, body, #app {
   left: 0;
   right: 0;
   height: 2px;
-  background-color: var(--primary);
+  background-color: #2563eb;
   border-radius: 1px;
 }
 

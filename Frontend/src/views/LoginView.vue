@@ -1,15 +1,31 @@
 <template>
-  <section class="wrap">
-    <LoginPage
-      :users="users"
-      :usersLoading="loading"
-      :usersError="error"
-      :loginError="loginError"
-      @signin="handleSignin"
-      @switch-page="onSwitchPage"
-    />
-  </section>
-  
+  <div class="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+      <div class="text-center">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Time Manager</h1>
+        <p class="text-sm text-gray-600">Sign in to your account</p>
+      </div>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div class="bg-white py-8 px-4 shadow-sm border border-gray-200 rounded-lg sm:px-10">
+        <LoginPage
+          :users="users"
+          :usersLoading="loading"
+          :usersError="error"
+          :loginError="loginError"
+          @signin="handleSignin"
+          @switch-page="onSwitchPage"
+        />
+        <!-- <button
+            type="submit"
+            class="btn-primary"
+          >
+            Sign In
+          </button> -->
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -66,7 +82,3 @@ const onSwitchPage = (page) => {
   if (page === 'signup') router.push('/signup')
 }
 </script>
-
-<style scoped>
-.wrap { max-width: 520px; margin: 3rem auto; padding: 0 1rem; }
-</style>
