@@ -40,6 +40,7 @@ defmodule ChronoPulse.MixProject do
       {:telemetry_metrics, "~> 1.0"},
       {:telemetry_poller, "~> 1.0"},
       {:gettext, "~> 0.26"},
+      {:bcrypt_elixir, "~> 3.0"},
       {:bandit, "~> 1.5"},
       {:bcrypt_elixir, "~> 3.0"}          # HTTP server for Phoenix in prod
     ]

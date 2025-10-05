@@ -1,15 +1,31 @@
 <template>
-  <section class="wrap">
-    <LoginPage
-      :users="users"
-      :usersLoading="loading"
-      :usersError="error"
-      :loginError="loginError"
-      @signin="handleSignin"
-      @switch-page="onSwitchPage"
-    />
-  </section>
-  
+  <div class="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+      <div class="text-center">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Time Manager</h1>
+        <p class="text-sm text-gray-600">Sign in to your account</p>
+      </div>
+    </div>
+
+    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+      <div class="bg-white py-8 px-4 shadow-sm border border-gray-200 rounded-lg sm:px-10">
+        <LoginPage
+          :users="users"
+          :usersLoading="loading"
+          :usersError="error"
+          :loginError="loginError"
+          @signin="handleSignin"
+          @switch-page="onSwitchPage"
+        />
+        <!-- <button
+            type="submit"
+            class="btn-primary"
+          >
+            Sign In
+          </button> -->
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -17,6 +33,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usersApi } from '../api/users'
 import LoginPage from '../components/loginPage.vue'
+import { getCurrentLocation } from '../utils/geolocation'
 
 const router = useRouter()
 const loading = ref(false)
@@ -42,15 +59,26 @@ const handleSignin = async ({ email, password }) => {
   const user = users.value.find(u => u.email === email)
   if (!user) { loginError.value = 'Invalid email'; return }
   if (!password) { loginError.value = 'Please enter password'; return }
-  localStorage.setItem('currentUser', JSON.stringify(user))
-  router.push('/dashboard')
+  
+  try {
+    // Request location permission
+    loginError.value = 'Getting your location...';
+    await getCurrentLocation();
+    
+    // Store user data and redirect
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    router.push('/dashboard');
+  } catch (error) {
+    console.warn('Location access was not granted, continuing without location data');
+    // Continue with login even if location access is denied
+    localStorage.setItem('currentUser', JSON.stringify(user));
+    router.push('/dashboard');
+  } finally {
+    loginError.value = '';
+  }
 }
 
 const onSwitchPage = (page) => {
   if (page === 'signup') router.push('/signup')
 }
 </script>
-
-<style scoped>
-.wrap { max-width: 520px; margin: 3rem auto; padding: 0 1rem; }
-</style>

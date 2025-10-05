@@ -19,7 +19,9 @@ defmodule ChronoPulseWeb.ClockJSON do
     %{
       id: clock.id,
       time: clock.time,
-      status: clock.status
+      status: clock.status,
+      latitude: clock.latitude,
+      longitude: clock.longitude
     }
   end
 end
