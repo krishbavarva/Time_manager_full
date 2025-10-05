@@ -1,59 +1,142 @@
 <template>
-  <section>
-    <h1>Daily Schedule</h1>
-      <div class="card">
-        <h2>Set Your Weekly Schedule</h2>
-        <p class="hint">Define your regular working hours for each day of the week.</p>
+  <section class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-5xl mx-auto">
+      <!-- Page Header -->
+      <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Daily Schedule</h1>
+        <p class="text-gray-600">Manage your weekly working hours and view upcoming schedule</p>
+      </div>
+
+      <!-- Set Weekly Schedule Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-2">Set Your Weekly Schedule</h2>
+          <p class="text-sm text-gray-600">Define your regular working hours for each day of the week.</p>
+        </div>
         
-        <form class="schedule-form" @submit.prevent="saveSchedule">
-          <div v-for="day in daysOfWeek" :key="day" class="day-schedule">
-            <label class="day-label">
-              <input type="checkbox" v-model="schedule[day].enabled" />
-              {{ day }}
-            </label>
-            <div class="time-inputs" v-if="schedule[day].enabled">
-              <input 
-                type="time" 
-                v-model="schedule[day].startTime"
-                :disabled="!schedule[day].enabled"
-                required
-              />
-              <span>to</span>
-              <input 
-                type="time" 
-                v-model="schedule[day].endTime"
-                :disabled="!schedule[day].enabled"
-                required
-              />
+        <form @submit.prevent="saveSchedule">
+          <!-- Days Schedule List -->
+          <div class="space-y-1 mb-6">
+            <div 
+              v-for="day in daysOfWeek" 
+              :key="day" 
+              class="flex flex-col sm:flex-row sm:items-center py-4 border-b border-gray-200 last:border-b-0 gap-3"
+            >
+              <!-- Day Checkbox -->
+              <label class="flex items-center min-w-[140px] font-medium text-gray-900 cursor-pointer">
+                <input 
+                  type="checkbox" 
+                  v-model="schedule[day].enabled" 
+                  class="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-2 focus:ring-blue-500 mr-3 cursor-pointer"
+                />
+                <span class="select-none">{{ day }}</span>
+              </label>
+              
+              <!-- Time Inputs -->
+              <div 
+                v-if="schedule[day].enabled" 
+                class="flex items-center gap-3 flex-1 sm:ml-4"
+              >
+                <input 
+                  type="time" 
+                  v-model="schedule[day].startTime"
+                  :disabled="!schedule[day].enabled"
+                  required
+                  class="flex-1 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+                />
+                <span class="text-gray-500 text-sm font-medium">to</span>
+                <input 
+                  type="time" 
+                  v-model="schedule[day].endTime"
+                  :disabled="!schedule[day].enabled"
+                  required
+                  class="flex-1 py-2 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+                />
+              </div>
             </div>
           </div>
-          <div class="form-actions">
-            <button type="submit" :disabled="saving">
-              {{ saving ? 'Saving...' : 'Save Schedule' }}
+
+          <!-- Save Button -->
+          <div class="flex justify-end pt-4">
+            <button 
+              type="submit" 
+              :disabled="saving" 
+              class="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg transition-all duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:bg-blue-600 shadow-sm"
+            >
+              <span v-if="saving" class="flex items-center gap-2">
+                <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Saving...
+              </span>
+              <span v-else>Save Schedule</span>
             </button>
           </div>
         </form>
-      
-          <h2>Upcoming Schedule</h2>
-          <p v-if="loading">Loading schedule...</p>
-          <p v-else-if="Object.keys(upcomingSchedule).length === 0" class="no-data">
-            No upcoming schedule. Please set your weekly schedule above.
-          </p>
-          <div v-else class="upcoming-schedule">
-        <div v-for="(item, date) in upcomingSchedule" :key="date" class="schedule-item">
-              <div class="schedule-date">
-            {{ formatScheduleDate(date) }}
-                       <!-- <span v-if="!item.isWithinWorkingHours" class="warning-badge" title="Outside working hours (9 AM - 5 PM)">⚠️</span> -->
+      </div>
+
+      <!-- Upcoming Schedule Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div class="mb-6">
+          <h2 class="text-xl font-semibold text-gray-900 mb-2">Upcoming Schedule</h2>
+          <p class="text-sm text-gray-600">Your scheduled working hours for the next 7 days</p>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="loading" class="flex justify-center items-center py-12">
+          <div class="flex items-center gap-3 text-gray-500">
+            <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>Loading schedule...</span>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div 
+          v-else-if="Object.keys(upcomingSchedule).length === 0" 
+          class="text-center py-12"
+        >
+          <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <p class="text-gray-600 text-sm">No upcoming schedule</p>
+          <p class="text-gray-500 text-xs mt-1">Please set your weekly schedule above</p>
+        </div>
+
+        <!-- Schedule List -->
+        <div v-else class="space-y-2">
+          <div 
+            v-for="(item, date) in upcomingSchedule" 
+            :key="date" 
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 transition-all duration-150 gap-2"
+          >
+            <!-- Date -->
+            <div class="flex items-center gap-2">
+              <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span class="font-medium text-gray-900">{{ formatScheduleDate(date) }}</span>
+            </div>
+            
+            <!-- Time & Duration -->
+            <div class="flex items-center gap-4 sm:ml-auto">
+              <div class="flex items-center gap-2 text-gray-700">
+                <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span class="text-sm font-medium">{{ formatTime(item.startTime) }} - {{ formatTime(item.endTime) }}</span>
               </div>
-              <div class="schedule-time">
-                {{ formatTime(item.startTime) }} - {{ formatTime(item.endTime) }}
-                <span class="schedule-duration">
-                  ({{ item.formattedDuration }})
-                </span>
-              </div>
+              <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {{ item.formattedDuration }}
+              </span>
             </div>
           </div>
         </div>
+      </div>
+    </div>
   </section>
   
   <!-- Notification Component -->
@@ -87,14 +170,12 @@ const autoClockOutInterval = ref(null)
 const handleAutoClockOut = async () => {
   try {
     console.log('Starting manual clock out process...')
-    // Get the current time for clock-out
     const now = new Date()
     const endTime = now.toISOString()
     
     console.log('Current user ID:', currentUserId.value)
     console.log('Current time:', endTime)
     
-    // Get the most recent working time record for the user
     const response = await workingTimesApi.list(currentUserId.value, { 
       end: endTime,
       limit: 1,
@@ -104,7 +185,6 @@ const handleAutoClockOut = async () => {
     if (response && response.data && response.data.length > 0) {
       const latestRecord = response.data[0]
       
-      // Only update if the record doesn't have an end time (clocked in but not out)
       if (!latestRecord.end_time) {
         await workingTimesApi.update(
           latestRecord.id, 
@@ -120,19 +200,15 @@ const handleAutoClockOut = async () => {
       showNotification('No active working time record found.', 'info')
     }
     
-    // Reset auto clock-out state
     autoClockOutTime.value = null
     showAutoClockOutNotification.value = false
     
   } catch (error) {
     console.error('Clock out failed:', error)
     
-    // More detailed error handling
     let errorMessage = 'Failed to clock out. '
     
     if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
       console.error('Response data:', error.response.data)
       console.error('Status code:', error.response.status)
       
@@ -146,11 +222,9 @@ const handleAutoClockOut = async () => {
         errorMessage += `Server responded with status ${error.response.status}`
       }
     } else if (error.request) {
-      // The request was made but no response was received
       console.error('No response received:', error.request)
       errorMessage += 'No response from server. Please check your connection.'
     } else {
-      // Something happened in setting up the request that triggered an Error
       console.error('Error:', error.message)
       errorMessage += error.message || 'An unknown error occurred.'
     }
@@ -164,11 +238,9 @@ const checkWorkingTimeAlert = async () => {
     const now = new Date()
     const today = now.toLocaleDateString('en-US', { weekday: 'long' })
     
-    // Create date range for today (without modifying original date)
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999)
     
-    // First, check if user has any clock-in records for today
     const response = await workingTimesApi.list(currentUserId.value, { 
       limit: 1,
       sort: '-start_time',
@@ -176,7 +248,6 @@ const checkWorkingTimeAlert = async () => {
       end: endOfDay.toISOString()
     })
     
-    // If no records for today or latest record has end_time, user is not clocked in
     const isClockedIn = response?.data?.length > 0 && !response.data[0].end_time
     
     if (!isClockedIn) {
@@ -184,7 +255,6 @@ const checkWorkingTimeAlert = async () => {
       return false
     }
     
-    // Check if today is a working day with end time set
     const hasWorkingHours = schedule[today]?.enabled && schedule[today].endTime
     
     if (!hasWorkingHours) {
@@ -192,19 +262,15 @@ const checkWorkingTimeAlert = async () => {
       return false
     }
     
-    // Calculate current time and end time in minutes
     const currentTime = now.getHours() * 60 + now.getMinutes()
     const [endHour, endMinute] = schedule[today].endTime.split(':').map(Number)
     const endTimeInMinutes = endHour * 60 + endMinute
     
-    // Show alert if current time is past end time (but don't auto clock out)
     if (currentTime >= endTimeInMinutes) {
       console.log('Working time has ended - showing alert to user')
       
-      // Show browser alert to remind user to clock out
       alert('You are still clocked in. Your working time has ended. Please remember to clock out!')
       
-      // Show UI notification as well
       showNotification('Your working time has ended. Please remember to clock out!', 'warning', 10000)
       
       return true
@@ -224,7 +290,6 @@ const showNotification = (message, type = 'success', duration = 3000) => {
   notification.duration = duration
   notification.show = true
   
-  // Access the notification component's show method
   nextTick(() => {
     if (notificationRef.value) {
       notificationRef.value.show()
@@ -234,7 +299,6 @@ const showNotification = (message, type = 'success', duration = 3000) => {
 
 const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
-// Default schedule
 const defaultSchedule = daysOfWeek.reduce((acc, day) => {
   acc[day] = { enabled: false, startTime: '09:00', endTime: '17:00' }
   return acc
@@ -242,7 +306,6 @@ const defaultSchedule = daysOfWeek.reduce((acc, day) => {
 
 const schedule = reactive(JSON.parse(JSON.stringify(defaultSchedule)))
 
-// Generate upcoming schedule for the next 7 days with working hours info
 const upcomingSchedule = computed(() => {
   const result = {}
   const today = new Date()
@@ -250,7 +313,7 @@ const upcomingSchedule = computed(() => {
   for (let i = 0; i < 7; i++) {
     const date = new Date(today)
     date.setDate(today.getDate() + i)
-    const dayName = daysOfWeek[date.getDay() === 0 ? 6 : date.getDay() - 1] // Convert to 0-6 (Mon-Sun)
+    const dayName = daysOfWeek[date.getDay() === 0 ? 6 : date.getDay() - 1]
     
     if (schedule[dayName]?.enabled) {
       const dateStr = date.toISOString().split('T')[0]
@@ -280,7 +343,6 @@ const formatDate = (date) => {
 
 const formatTime = (time) => {
   if (!time) return '--'
-  // If it's already in HH:MM format
   if (typeof time === 'string' && time.match(/^\d{2}:\d{2}$/)) {
     const [hours, minutes] = time.split(':')
     const date = new Date()
@@ -288,7 +350,6 @@ const formatTime = (time) => {
     return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
   }
   
-  // Handle ISO date strings
   const d = new Date(time)
   if (isNaN(+d)) return String(time)
   return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
@@ -310,13 +371,11 @@ const formatScheduleDate = (dateStr) => {
   })
 }
 
-// Check if a time is within standard working hours (9 AM to 5 PM)
 const isWithinWorkingHours = (time) => {
   if (!time) return false
   try {
     const [hours, minutes] = time.split(':').map(Number)
     const totalMinutes = hours * 60 + minutes
-    // Standard working hours: 9:00 AM to 5:00 PM (540 to 1020 in minutes)
     return totalMinutes >= 540 && totalMinutes <= 1020
   } catch (e) {
     console.error('Error checking working hours for time:', time, e)
@@ -324,7 +383,6 @@ const isWithinWorkingHours = (time) => {
   }
 }
 
-// Calculate working minutes between two times
 const getWorkingMinutes = (start, end) => {
   if (!start || !end) return 0
   
@@ -333,10 +391,8 @@ const getWorkingMinutes = (start, end) => {
     const startTime = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), ...start.split(':').map(Number))
     const endTime = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), ...end.split(':').map(Number))
     
-    // Calculate total minutes (handling overnight)
     const totalMinutes = Math.abs(endTime - startTime) / 60000
     
-    // Return the actual time difference in minutes
     return totalMinutes
   } catch (e) {
     console.error('Error calculating working minutes:', { start, end }, e)
@@ -344,7 +400,6 @@ const getWorkingMinutes = (start, end) => {
   }
 }
 
-// Format minutes into hours and minutes
 const formatDuration = (minutes) => {
   if (minutes <= 0) return '0h 0m'
   const hours = Math.floor(minutes / 60)
@@ -355,19 +410,15 @@ const formatDuration = (minutes) => {
 const calculateDuration = (start, end) => {
   if (!start || !end) return '--'
   
-  // Calculate working minutes between start and end times
   const workingMinutes = getWorkingMinutes(start, end)
   
-  // Get total minutes for comparison
   const [startHour, startMinute] = start.split(':').map(Number)
   const [endHour, endMinute] = end.split(':').map(Number)
   let totalMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute)
   if (totalMinutes < 0) totalMinutes += 24 * 60
   
-  // If no working minutes, return 0
   if (workingMinutes <= 0) return '0h 0m (outside working hours)'
   
-  // If working minutes is less than total minutes, show both
   if (workingMinutes < totalMinutes) {
     return `${formatDuration(workingMinutes)} (of ${formatDuration(totalMinutes)})`
   }
@@ -381,13 +432,11 @@ const loadSchedule = async () => {
   try {
     if (!currentUserId.value) return
     
-    // Try to load from localStorage first
     const savedSchedule = localStorage.getItem(`user_${currentUserId.value}_schedule`)
     if (savedSchedule) {
       const parsed = JSON.parse(savedSchedule)
       daysOfWeek.forEach(day => {
         if (parsed[day]) {
-          // Only update if the saved value exists for this day
           schedule[day] = { 
             enabled: parsed[day].enabled !== undefined ? parsed[day].enabled : false,
             startTime: parsed[day].startTime || '09:00',
@@ -396,11 +445,9 @@ const loadSchedule = async () => {
         }
       })
     } else {
-      // If no saved schedule, try to fetch from API
       try {
         const response = await workingTimesApi.list(currentUserId.value)
         if (response && response.data) {
-          // Process API response if needed
           console.log('Fetched schedule from API:', response.data)
         }
       } catch (apiError) {
@@ -416,7 +463,6 @@ const loadSchedule = async () => {
 }
 
 const saveSchedule = async (e) => {
-  // Prevent default form submission if called from a form
   if (e) {
     e.preventDefault()
   }
@@ -429,7 +475,6 @@ const saveSchedule = async (e) => {
       throw new Error('User not logged in')
     }
     
-    // Validate schedule times
     const invalidDays = daysOfWeek.filter(day => {
       if (!schedule[day].enabled) return false
       const start = schedule[day].startTime
@@ -439,12 +484,10 @@ const saveSchedule = async (e) => {
       const [startHours, startMins] = start.split(':').map(Number)
       const [endHours, endMins] = end.split(':').map(Number)
       
-      // Basic validation
       if (isNaN(startHours) || isNaN(startMins) || isNaN(endHours) || isNaN(endMins)) {
         return true
       }
       
-      // End time should be after start time
       if (endHours < startHours || (endHours === startHours && endMins <= startMins)) {
         return true
       }
@@ -456,7 +499,6 @@ const saveSchedule = async (e) => {
       throw new Error(`Invalid time range for: ${invalidDays.join(', ')}. End time must be after start time.`)
     }
     
-    // Create a clean copy for saving
     const scheduleToSave = {}
     daysOfWeek.forEach(day => {
       scheduleToSave[day] = {
@@ -466,20 +508,14 @@ const saveSchedule = async (e) => {
       }
     })
     
-    // Save to localStorage
     localStorage.setItem(`user_${currentUserId.value}_schedule`, JSON.stringify(scheduleToSave))
     
-    // In a real app, you would save to the API here
-    // await workingTimesApi.update(currentUserId.value, scheduleToSave)
-    
-    // Show success notification
     showNotification('Schedule saved successfully!', 'success')
   } catch (err) {
     console.error('Failed to save schedule:', err)
     const errorMessage = err.message || 'Failed to save schedule. Please check your input.'
     error.value = errorMessage
     
-    // Scroll to error message
     await nextTick()
     const errorEl = document.querySelector('.error')
     if (errorEl) {
@@ -492,10 +528,8 @@ const saveSchedule = async (e) => {
   }
 }
 
-// Initialize the component
 onMounted(async () => {
   try {
-    // Get current user from localStorage
     const user = JSON.parse(localStorage.getItem('currentUser') || 'null')
     if (user?.id) {
       currentUserId.value = String(user.id)
@@ -505,7 +539,6 @@ onMounted(async () => {
       return
     }
     
-    // Set up auto-save interval
     let lastSavedSchedule = JSON.stringify(schedule)
     const saveInterval = setInterval(() => {
       const currentSchedule = JSON.stringify(schedule)
@@ -515,14 +548,11 @@ onMounted(async () => {
       }
     }, 30000)
     
-    // Set up working time alert interval (every minute)
     autoClockOutInterval.value = setInterval(async () => {
       await checkWorkingTimeAlert()
     }, 60000)
-    // Initial check
     await checkWorkingTimeAlert()
     
-    // Clean up intervals on component unmount
     onBeforeUnmount(() => {
       clearInterval(saveInterval)
       if (autoClockOutInterval.value) {
@@ -539,309 +569,11 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.working-times-view {
-  background-color: #ffffff;
-  color: #000000;
-  min-height: 100%;
-  padding: 1rem;
-}
-
-.card { 
-  margin-top: 1rem; 
-  padding: 1.5rem; 
-  background: #ffffff; 
-  border: 1px solid #e5e7eb; 
-  border-radius: 8px; 
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-h1 {
-  color: #111827;
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-h2 {
-  margin: 0 0 1.5rem;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-}
-
-.text-muted {
-  color: #6b7280;
-  font-size: 0.9375rem;
-}
-
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem 1rem;
-  border-radius: 0.375rem;
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-primary {
-  background-color: #2563eb;
-  color: white;
-  border: 1px solid transparent;
-}
-
-.btn-primary:hover {
-  background-color: #1d4ed8;
-}
-
-.btn-outline {
-  background-color: white;
-  border: 1px solid #d1d5db;
-  color: #374151;
-}
-
-.btn-outline:hover {
-  background-color: #f9fafb;
-  border-color: #9ca3af;
-}
-
-.form-group {
-  margin-bottom: 1rem;
-}
-
-.form-control {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  font-size: 0.875rem;
-  color: #111827;
-  background-color: #ffffff;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-}
-
-.border {
-  border-color: #e5e7eb;
-}
-
-.rounded-lg {
-  border-radius: 0.5rem;
-}
-
-.text-gray-400 {
-  color: #9ca3af;
-}
-
-.text-gray-500 {
-  color: #000000;
-}
-
-.text-blue-600 {
-  color: #252525;
-}
-
-.hint {
-  color: #111111;
-  margin-bottom: 1.5rem;
-  font-size: 0.9rem;
-}
-
-.schedule-form {
-  margin-bottom: 2rem;
-}
-
-.day-schedule {
-  display: flex;
-  align-items: center;
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #2d3748;
-}
-
-.day-label {
-  display: flex;
-  align-items: center;
-  width: 120px;
-  font-weight: 500;
-  color: #000000;
-}
-
-.day-label input[type="checkbox"] {
-  margin-right: 0.75rem;
-}
-
-.time-inputs {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-grow: 1;
-}
-
-.time-inputs input[type="time"] {
-  padding: 0.5rem 0.75rem;
-  border-radius: 6px;
-  border: 1px solid #374151;
-  background: #ffffff;
-  color: #000000;
-  font-size: 0.9rem;
-}
-
-.time-inputs span {
-  color: #000000;
-  font-size: 0.9rem;
-}
-
-.form-actions {
-  margin-top: 1.5rem;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.form-actions button {
-  padding: 0.6rem 1.5rem;
-  background: #2563eb;
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
-}
-
-.form-actions button:hover {
-  background: #1d4ed8;
-  transform: translateY(-1px);
-}
-
-.form-actions button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.upcoming-schedule {
-  margin-top: 1rem;
-  border: 1px solid #2d3748;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.schedule-item {
-  padding: 1rem;
-  display: flex;
-  align-items: center;
-  border-bottom: 1px solid #252525;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.schedule-item:last-child {
-  border-bottom: none;
-}
-
-.schedule-date {
-  width: 40%;
-  font-weight: 500;
-  color: #000000;
-}
-
-.schedule-time {
-}
-
-.schedule-duration {
-  font-size: 0.9em;
-  color: #505050;
-  margin-left: 0.5rem;
-}
-
-.schedule-duration.overtime {
-  color: #ef4444;
-  font-weight: 500;
-}
-
 .warning-badge {
   margin-left: 0.5rem;
   color: #f59e0b;
   font-size: 0.8em;
   vertical-align: middle;
-}
-
-.error { 
-  color: #ef4444; 
-  margin: 1rem 0;
-  background: rgba(239, 68, 68, 0.1);
-  border-radius: 6px;
-  font-size: 0.9rem;
-}
-
-.no-data {
-  text-align: center;
-  color: #6b7280;
-  padding: 2rem;
-  font-style: italic;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 8px;
-  margin: 1rem 0;
-}
-
-/* Auto Clock Out Notification */
-.auto-clockout-notification {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #1e293b;
-  border-left: 4px solid #f59e0b;
-  border-radius: 8px;
-  padding: 1rem;
-  max-width: 320px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  z-index: 1000;
-  animation: slideIn 0.3s ease-out;
-}
-
-.notification-content {
-  color: #e5e7eb;
-}
-
-.notification-actions {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
-}
-
-.btn-clockout-now {
-  padding: 0.4rem 0.75rem;
-  background: #f59e0b;
-  color: #1f2937;
-  border: none;
-  border-radius: 6px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.btn-clockout-now:hover {
-  background: #d97706;
-}
-
-.btn-cancel {
-  padding: 0.4rem 0.75rem;
-  background: transparent;
-  color: #9ca3af;
-  border: 1px solid #4b5563;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btn-cancel:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: #e5e7eb;
 }
 
 @keyframes slideIn {
@@ -888,4 +620,3 @@ h2 {
   }
 }
 </style>
-

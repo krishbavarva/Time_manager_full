@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Custom CSS Framework - Modern, Responsive Design */
 
 /* CSS Reset and Base Styles */

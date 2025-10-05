@@ -1,33 +1,73 @@
 <template>
-  <section>
-    <div class="header">
+  <section class="p-6 max-w-7xl mx-auto bg-white">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
       <div>
-        <h1>Dashboard</h1>
-        <p v-if="user" class="muted">Welcome, <b>{{ user.username || [user.first_name, user.last_name].filter(Boolean).join(' ') }}</b></p>
+        <h1 class="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p v-if="user" class="text-gray-600 mt-1">
+          Welcome, <b class="text-gray-800">{{ user.username || [user.first_name, user.last_name].filter(Boolean).join(' ') }}</b>
+          <span 
+            class="ml-2 px-2 py-0.5 text-xs font-medium rounded-full"
+            :class="{
+              'bg-purple-100 text-purple-800': userRole === 'admin',
+              'bg-blue-100 text-blue-800': userRole === 'manager',
+              'bg-green-100 text-green-800': userRole === 'employee'
+            }"
+          >
+            {{ userRole }}
+          </span>
+        </p>
       </div>
-      <div class="badges">
-        <span class="badge">
-          <span class="k">Work</span>
-          <span class="v">{{ totalWorkMin }}m ({{ totalWorkMin * 60 }}s)</span>
+      
+      <div class="flex flex-wrap gap-3">
+        <span class="px-3 py-1.5 bg-white border border-gray-200 rounded-lg shadow-sm text-sm">
+          <span class="text-gray-500">Work</span>
+          <span class="ml-1 font-medium text-gray-900">{{ totalWorkMin }}m ({{ totalWorkMin * 60 }}s)</span>
         </span>
-        <span class="badge warn">
-          <span class="k">Break</span>
-          <span class="v">{{ totalBreakMin }}m ({{ totalBreakMin * 60 }}s)</span>
+        
+        <span class="px-3 py-1.5 bg-white border border-yellow-100 rounded-lg shadow-sm text-sm">
+          <span class="text-yellow-700">Break</span>
+          <span class="ml-1 font-medium text-yellow-900">{{ totalBreakMin }}m ({{ totalBreakMin * 60 }}s)</span>
         </span>
-        <span class="badge info">
-          <span class="k">Sessions</span>
-          <span class="v">{{ allSessions.length }}</span>
+        
+        <span class="px-3 py-1.5 bg-white border border-blue-100 rounded-lg shadow-sm text-sm">
+          <span class="text-blue-700">Sessions</span>
+          <span class="ml-1 font-medium text-blue-900">{{ allSessions.length }}</span>
         </span>
+        
+        <!-- Admin/Manager Actions -->
+        <button 
+          v-if="isAdmin" 
+          @click="$router.push('/admin/users')"
+          class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+        >
+          <span>👥</span>
+          <span>Manage Users</span>
+        </button>
+        
+        <button 
+          v-if="isManager" 
+          @click="$router.push('/team')"
+          class="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+        >
+          <span>👥</span>
+          <span>My Team</span>
+        </button>
+        
+        <button 
+          @click="openProfile" 
+          class="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+        >
+          Edit Profile
+        </button>
       </div>
-      <button class="ghost" @click="openProfile">Edit Profile</button>
     </div>
 
-    <div class="card">
-      <h2>Today's Sessions</h2>
-      <p v-if="loading">Loading…</p>
-      <p v-if="error" class="error">{{ error }}</p>
-      <div v-if="!loading && sessions.length === 0">No sessions recorded today.</div>
-      <table v-if="!loading && sessions.length" class="table">
+    <div class="bg-white rounded-lg shadow p-6 mb-6">
+      <h2 class="text-lg font-semibold text-gray-900 mb-4">Today's Sessions</h2>
+      <p v-if="loading" class="text-gray-600">Loading…</p>
+      <p v-if="error" class="text-red-600">{{ error }}</p>
+      <div v-if="!loading && sessions.length === 0" class="text-gray-500">No sessions recorded today.</div>
+      <table v-if="!loading && sessions.length" class="min-w-full divide-y divide-gray-200">
         <thead>
           <tr>
             <th>Start</th>
@@ -82,39 +122,70 @@
   <!-- Edit Profile Modal -->
   <div v-if="showProfile" class="modal-backdrop" @click.self="showProfile=false">
     <div class="modal">
-      <h3>Edit profile</h3>
+      <h3>Edit Profile</h3>
       <div class="form">
-        <label>
-          Username
-          <input v-model.trim="profile.username" type="text" />
-        </label>
-        <label>
-          First name
-          <input v-model.trim="profile.first_name" type="text" />
-        </label>
-        <label>
-          Last name
-          <input v-model.trim="profile.last_name" type="text" />
-        </label>
+        <div class="form-group">
+          <label>Username</label>
+          <input v-model.trim="profile.username" type="text" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>First name</label>
+          <input v-model.trim="profile.first_name" type="text" class="form-control" />
+        </div>
+        <div class="form-group">
+          <label>Last name</label>
+          <input v-model.trim="profile.last_name" type="text" class="form-control" />
+        </div>
+        
+        <!-- Role Selection (Admin only) -->
+        <div v-if="isAdmin" class="form-group">
+          <label>Role</label>
+          <select v-model="profile.role" class="form-control" :disabled="!isAdmin">
+            <option v-for="role in Object.values(ROLES)" :key="role" :value="role">
+              {{ role.charAt(0).toUpperCase() + role.slice(1) }}
+            </option>
+          </select>
+        </div>
+        
+        <div v-if="error" class="error-message">{{ error }}</div>
       </div>
-      <div class="actions">
-        <button class="ghost" @click="showProfile=false">Cancel</button>
-        <button @click="saveProfile">Save</button>
+            <div class="actions">
+        <div class="action-buttons">
+          <button class="ghost" @click="showProfile=false" :disabled="saving">
+            Cancel
+          </button>
+          <button @click="saveProfile" :disabled="saving">
+            {{ saving ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </div>
+        <div class="danger-zone">
+          <h4>Danger Zone</h4>
+          <button 
+            class="danger" 
+            @click="confirmDelete" 
+            :disabled="saving"
+            title="Permanently delete your account">
+            🗑️ Delete My Account
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { workingTimesApi } from '../api/workingTimes'
-import { usersApi } from '../api/users'
+import { usersApi, ROLES } from '../api/users'
 import { chartsApi } from '../api/charts'
 import Chart from 'chart.js/auto'
 
+const router = useRouter()
 const user = ref(null)
-const loading = ref(false)
+const saving = ref(false)
 const error = ref('')
+const profileError = ref('')
 const sessions = ref([])
 const hoursRows = ref([])
 const allSessions = ref([])
@@ -129,6 +200,7 @@ let scatterChart = null
 
 // Edit profile modal state
 const showProfile = ref(false)
+const showDeleteConfirm = ref(false)
 const profile = ref({ username: '', first_name: '', last_name: '' })
 
 const loadToday = async () => {
@@ -279,310 +351,87 @@ onMounted(() => {
 
 const openProfile = () => {
   if (!user.value) return
-  profile.value = { username: user.value.username || '', first_name: user.value.first_name || '', last_name: user.value.last_name || '' }
+  profile.value = { 
+    username: user.value.username || '', 
+    first_name: user.value.first_name || '', 
+    last_name: user.value.last_name || '',
+    role: user.value.role || ROLES.EMPLOYEE
+  }
   showProfile.value = true
+  error.value = ''
+  saving.value = false
+}
+
+// Role-based computed properties
+const userRole = computed(() => {
+  if (!user.value) return ''
+  return user.value.role || ROLES.EMPLOYEE
+})
+
+const isAdmin = computed(() => userRole.value === ROLES.ADMIN)
+const isManager = computed(() => [ROLES.ADMIN, ROLES.MANAGER].includes(userRole.value))
+
+// Handle user logout
+const handleLogout = () => {
+  localStorage.removeItem('currentUser')
+  router.push('/login')
 }
 
 const saveProfile = async () => {
   if (!user.value) return
+  saving.value = true
   try {
-    const res = await usersApi.update(user.value.id, {
+    const profileData = {
       username: profile.value.username,
       first_name: profile.value.first_name,
       last_name: profile.value.last_name,
-    })
+    }
+    
+    // Only include role if user is admin and it's being updated
+    if (isAdmin.value && profile.value.role) {
+      profileData.role = profile.value.role
+    }
+    
+    const res = await usersApi.update(user.value.id, profileData)
     const updated = res?.data || res
     user.value = updated
     localStorage.setItem('currentUser', JSON.stringify(user.value))
     showProfile.value = false
   } catch (e) {
     console.error('Failed to update profile', e)
-    alert('Failed to save profile. Ensure backend is running and migration applied.')
+    alert('Failed to save profile. ' + (e.message || 'Ensure backend is running and migration applied.'))
+  } finally {
+    saving.value = false
+  }
+}
+
+const confirmDelete = () => {
+  if (confirm('⚠️ Are you sure you want to delete your account? This action cannot be undone!')) {
+    deleteAccount()
+  }
+}
+
+const deleteAccount = async () => {
+  if (!user.value) return
+  
+  if (!confirm('This will permanently delete your account and all associated data. Are you absolutely sure?')) {
+    return
+  }
+  
+  saving.value = true
+  try {
+    await usersApi.remove(user.value.id)
+    alert('Your account has been deleted successfully.')
+    handleLogout()
+  } catch (e) {
+    console.error('Failed to delete account', e)
+    alert('Failed to delete account: ' + (e.message || 'Please try again later.'))
+  } finally {
+    saving.value = false
   }
 }
 </script>
 
 <style scoped>
-/* Base styles */
-section {
-  padding: 1.5rem;
-  max-width: 1200px;
-  background: white;
-  margin: 0 auto;
-}
-
-h1 {
-  color: #1f2937;
-  font-size: 1.875rem;
-  margin-bottom: 0.5rem;
-  font-weight: 700;
-}
-
-h2 {
-  color: #1f2937;
-  font-size: 1.25rem;
-  margin: 1.5rem 0 1rem;
-  font-weight: 600;
-}
-
-/* Header */
-.header { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: center; 
-  gap: 1.5rem; 
-  margin-bottom: 1.5rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-.muted { 
-  color: #4b5563;
-  font-size: 1rem;
-}
-
-/* Badges */
-.badges { 
-  display: flex; 
-  gap: 1rem; 
-  margin: 1rem 0; 
-  flex-wrap: wrap;
-}
-
-.badge { 
-  display: inline-flex; 
-  flex-direction: column; 
-  padding: 0.75rem 1.25rem; 
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem; 
-  font-size: 0.9375rem;
-  min-width: 120px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-}
-
-.badge:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.badge .k { 
-  color: #4b5563;
-  font-size: 0.8125rem; 
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-}
-
-.badge .v {
-  font-weight: 600;
-  color: #1f2937;
-  font-size: 1.125rem;
-}
-
-.badge.warn { 
-  background: #fffbeb;
-  border-color: #fde68a;
-}
-
-.badge.warn .k { 
-  color: #92400e; 
-}
-
-.badge.info { 
-  background: #eff6ff;
-  border-color: #bfdbfe;
-}
-
-.badge.info .k { 
-  color: #1e40af; 
-}
-
-/* Cards */
-.card { 
-  background: #ffffff; 
-  padding: 1.5rem; 
-  border-radius: 0.75rem; 
-  margin: 1.5rem 0; 
-  border: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-/* Tables */
-.table { 
-  width: 100%; 
-  border-collapse: separate;
-  border-spacing: 0;
-  margin: 1.25rem 0;
-  font-size: 0.9375rem;
-}
-
-.table th { 
-  text-align: left; 
-  padding: 0.75rem 1rem; 
-  border-bottom: 1px solid #e5e7eb;
-  font-weight: 600;
-  color: #374151;
-  background-color: #f9fafb;
-}
-
-.table td { 
-  padding: 0.75rem 1rem; 
-  border-bottom: 1px solid #e5e7eb;
-  color: #1f2937;
-}
-
-.table tr:last-child td {
-  border-bottom: none;
-}
-
-.table tr:hover td {
-  background-color: #f3f4f6;
-}
-
-/* Utility classes */
-.hint { 
-  color: #6b7280;
-  font-size: 0.9375rem;
-  margin: 0.5rem 0 1.5rem;
-}
-
-.error { 
-  color: #dc2626; 
-  background: #fef2f2;
-  padding: 0.75rem 1rem;
-  border-radius: 0.375rem;
-  margin: 1rem 0;
-  border: 1px solid #fecaca;
-}
-
-/* Buttons */
-button, .btn {
-  background-color: #2563eb;
-  color: white;
-  border: none;
-  padding: 0.625rem 1.25rem;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  font-size: 0.9375rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-button:hover, .btn:hover {
-  background-color: #1d4ed8;
-  transform: translateY(-1px);
-}
-
-.ghost { 
-  background: none; 
-  border: 1px solid #d1d5db; 
-  color: #374151;
-  padding: 0.5rem 1rem;
-  transition: all 0.2s;
-}
-
-.ghost:hover { 
-  background: #f3f4f6;
-  border-color: #2563eb;
-  color: #2563eb;
-}
-
-/* Charts */
-.chart-box { 
-  position: relative; 
-  height: 260px; 
-  margin-top: 1.5rem;
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.5rem;
-  padding: 1rem;
-}
-
-/* Modal */
-.modal-backdrop { 
-  position: fixed; 
-  inset: 0; 
-  background: white; 
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  z-index: 50; 
-  backdrop-filter: blur(2px);
-}
-
-.modal { 
-  width: 100%; 
-  max-width: 420px; 
-  background: white; 
-  border: 1px solid #e5e7eb; 
-  border-radius: 0.75rem; 
-  padding: 1.5rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.modal h3 { 
-  margin: 0 0 1.25rem 0;
-  color: #1f2937;
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.modal .form { 
-  display: flex; 
-  gap: 1rem; 
-  flex-direction: column; 
-}
-
-.modal input { 
-  width: 100%; 
-  padding: 0.625rem 0.75rem; 
-  border-radius: 0.5rem; 
-  border: 1px solid #d1d5db; 
-  background: white; 
-  color: #1f2937;
-  font-size: 0.9375rem;
-  transition: border-color 0.2s;
-}
-
-.modal input:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.modal .actions { 
-  display: flex; 
-  gap: 0.75rem; 
-  justify-content: flex-end; 
-  margin-top: 1.5rem; 
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  
-  .badges {
-    width: 100%;
-    justify-content: space-between;
-  }
-  
-  .badge {
-    flex: 1;
-    min-width: auto;
-  }
-  
-  .modal {
-    margin: 1rem;
-    padding: 1.25rem;
-  }
-}
+/* All styles are now handled by Tailwind CSS utility classes */
 </style>

@@ -1,28 +1,76 @@
 <template>
-  <div class="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
-    <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <div class="text-center">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div class="w-full max-w-md">
+      <!-- Logo and Title -->
+      <div class="text-center mb-8">
+        <div class="mx-auto w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
         <h1 class="text-3xl font-bold text-gray-900 mb-2">Time Manager</h1>
-        <p class="text-sm text-gray-600">Sign in to your account</p>
+        <p class="text-gray-600">Sign in to access your dashboard</p>
+        
+        <!-- Success Message -->
+        <div v-if="loginSuccess" class="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3">
+              <p class="text-sm font-medium text-green-800">
+                Welcome back, {{ loginUser?.first_name || loginUser?.username || 'User' }}!
+              </p>
+              <p v-if="loginUser?.role" class="text-sm text-green-700 mt-1">
+                Role: {{ loginUser.role.toUpperCase() }}
+              </p>
+              <p class="text-sm text-green-700 mt-2">
+                <span class="inline-flex items-center">
+                  <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Redirecting...
+                </span>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
 
-    <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-      <div class="bg-white py-8 px-4 shadow-sm border border-gray-200 rounded-lg sm:px-10">
-        <LoginPage
-          :users="users"
-          :usersLoading="loading"
-          :usersError="error"
-          :loginError="loginError"
-          @signin="handleSignin"
-          @switch-page="onSwitchPage"
-        />
-        <!-- <button
-            type="submit"
-            class="btn-primary"
-          >
-            Sign In
-          </button> -->
+      <!-- Login Card -->
+      <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="p-8">
+          <LoginPage
+            :users="users"
+            :usersLoading="loading"
+            :usersError="error"
+            :loginError="loginError"
+            @signin="handleSignin"
+            @switch-page="onSwitchPage"
+          />
+        </div>
+        
+        <!-- Footer -->
+        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          <p class="text-xs text-center text-gray-500">
+            By signing in, you agree to our
+            <a href="#" class="text-indigo-600 hover:text-indigo-500 font-medium">Terms</a> and
+            <a href="#" class="text-indigo-600 hover:text-indigo-500 font-medium">Privacy Policy</a>.
+          </p>
+        </div>
+      </div>
+      
+      <!-- Sign up link -->
+      <div class="mt-6 text-center">
+        <p class="text-sm text-gray-600">
+          Don't have an account? 
+          <a href="#" @click.prevent="onSwitchPage('signup')" class="font-medium text-indigo-600 hover:text-indigo-500">
+            Sign up for free
+          </a>
+        </p>
       </div>
     </div>
   </div>
@@ -39,6 +87,8 @@ const router = useRouter()
 const loading = ref(false)
 const error = ref('')
 const loginError = ref('')
+const loginSuccess = ref(false)
+const loginUser = ref(null)
 const users = ref([])
 
 onMounted(async () => {
@@ -53,29 +103,17 @@ onMounted(async () => {
   }
 })
 
-const handleSignin = async ({ email, password }) => {
+const handleSignin = async ({ email }) => {
   loginError.value = ''
-  // Backend has no password field, accept any non-empty password
   const user = users.value.find(u => u.email === email)
-  if (!user) { loginError.value = 'Invalid email'; return }
-  if (!password) { loginError.value = 'Please enter password'; return }
-  
-  try {
-    // Request location permission
-    loginError.value = 'Getting your location...';
-    await getCurrentLocation();
-    
-    // Store user data and redirect
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    router.push('/dashboard');
-  } catch (error) {
-    console.warn('Location access was not granted, continuing without location data');
-    // Continue with login even if location access is denied
-    localStorage.setItem('currentUser', JSON.stringify(user));
-    router.push('/dashboard');
-  } finally {
-    loginError.value = '';
+  if (!user) { 
+    loginError.value = 'User not found'
+    return 
   }
+  
+  // Store user data and redirect
+  localStorage.setItem('currentUser', JSON.stringify(user))
+  router.push('/dashboard')
 }
 
 const onSwitchPage = (page) => {

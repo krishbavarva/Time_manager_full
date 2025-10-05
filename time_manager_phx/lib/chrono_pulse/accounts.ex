@@ -59,44 +59,42 @@ defmodule ChronoPulse.Accounts do
       %User{}
 
       iex> get_user!(456)
-      ** (Ecto.NoResultsError)
 
   """
   def get_user!(id), do: Repo.get!(User, id)
 
   @doc """
-  Creates a user.
+  Creates a user with the given attributes.
 
   ## Examples
 
-      iex> create_user(%{field: value})
+      iex> create_user(%{email: "test@example.com", password: "password123", first_name: "John", last_name: "Doe"})
       {:ok, %User{}}
 
-      iex> create_user(%{field: bad_value})
+      iex> create_user(%{email: nil})
       {:error, %Ecto.Changeset{}}
 
   """
-  def create_user(attrs) do
+  def create_user(attrs \\ %{}) do
     %User{}
-    |> User.changeset(attrs)
+    |> User.registration_changeset(attrs)
     |> Repo.insert()
   end
 
   @doc """
   Updates a user.
-
   ## Examples
 
-      iex> update_user(user, %{field: new_value})
+      iex> update_user(user, %{first_name: "New Name"})
       {:ok, %User{}}
 
-      iex> update_user(user, %{field: bad_value})
+      iex> update_user(user, %{email: "not-an-email"})
       {:error, %Ecto.Changeset{}}
 
   """
-  def update_user(%User{} = user, attrs) do
+  def update_user(%User{} = user, attrs, opts \\ []) do
     user
-    |> User.changeset(attrs)
+    |> User.update_changeset(attrs, opts)
     |> Repo.update()
   end
 
@@ -126,6 +124,6 @@ defmodule ChronoPulse.Accounts do
 
   """
   def change_user(%User{} = user, attrs \\ %{}) do
-    User.changeset(user, attrs)
+    User.update_changeset(user, attrs)
   end
 end
