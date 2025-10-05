@@ -8,10 +8,42 @@ defmodule ChronoPulseWeb.UserController do
   action_fallback ChronoPulseWeb.FallbackController
 
   def index(conn, params) do
-    username = Map.get(params, "username")
-    email = Map.get(params, "email")
-    users = Accounts.search_users(username, email)
-    render(conn, :index, users: users)
+    require Logger
+    Logger.info("UserController.index called with params: #{inspect(params)}")
+    
+    try do
+      username = Map.get(params, "username")
+      email = Map.get(params, "email")
+      
+      Logger.info("Searching users with username: #{inspect(username)}, email: #{inspect(email)}")
+      users = Accounts.search_users(username, email)
+      Logger.info("Found #{length(users)} users")
+      
+      # Log the first user's data if available
+      if length(users) > 0 do
+        Logger.info("First user data: #{inspect(List.first(users))}")
+      end
+      
+      # Explicitly specify the JSON format
+      json(conn, %{data: Enum.map(users, &user_json/1)})
+    rescue
+      error ->
+        Logger.error("Error in UserController.index: #{inspect(error)}")
+        Logger.error("Stacktrace: #{inspect(__STACKTRACE__)}")
+        send_resp(conn, 500, "Internal server error")
+    end
+  end
+
+  # Helper function to convert User struct to JSON
+  defp user_json(%ChronoPulse.Accounts.User{} = user) do
+    %{
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      first_name: user.first_name,
+      last_name: user.last_name,
+      role: user.role || "employee"
+    }
   end
 
   def create(conn, %{"user" => user_params}) do
@@ -79,16 +111,5 @@ defmodule ChronoPulseWeb.UserController do
     with {:ok, %User{}} <- Accounts.delete_user(user) do
       send_resp(conn, :no_content, "")
     end
-  end
-
-  def user_json(%User{} = user) do
-    %{
-      id: user.id,
-      username: user.username,
-      email: user.email,
-      first_name: user.first_name,
-      last_name: user.last_name,
-      role: user.role
-    }
   end
 end

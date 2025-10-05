@@ -103,17 +103,81 @@ onMounted(async () => {
   }
 })
 
-const handleSignin = async ({ email }) => {
+const handleSignin = async ({ email, password }) => {
   loginError.value = ''
-  const user = users.value.find(u => u.email === email)
-  if (!user) { 
-    loginError.value = 'User not found'
-    return 
+  loginSuccess.value = false
+  
+  if (!email || !password) {
+    loginError.value = 'Please enter both email and password'
+    return
   }
   
-  // Store user data and redirect
-  localStorage.setItem('currentUser', JSON.stringify(user))
-  router.push('/dashboard')
+  try {
+    // Verify password with the backend and get user data
+    const isAuthenticated = await verifyPassword(email, password)
+    
+    if (!isAuthenticated) {
+      loginError.value = 'Invalid email or password'
+      return
+    }
+    
+    // Find user in the local users list (or fetch fresh user data from the server)
+    const user = users.value.find(u => u.email === email)
+    
+    if (user) {
+      // Store user data (without sensitive information)
+      const userData = {
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        role: user.role
+      }
+      
+      localStorage.setItem('currentUser', JSON.stringify(userData))
+      loginUser.value = userData
+    }
+    
+    loginSuccess.value = true
+    
+    // Redirect to dashboard after a short delay
+    setTimeout(() => {
+      router.push('/dashboard')
+    }, 1500)
+    
+  } catch (err) {
+    console.error('Login error:', err)
+    loginError.value = err.message || 'An error occurred during login. Please try again.'
+  }
+}
+
+const verifyPassword = async (email, password) => {
+  try {
+    const response = await fetch('/api/sessions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Authentication failed')
+    }
+
+    const data = await response.json()
+    
+    // Store the token in localStorage
+    if (data.data && data.data.token) {
+      localStorage.setItem('authToken', data.data.token)
+      return true
+    }
+    
+    return false
+  } catch (error) {
+    console.error('Authentication error:', error)
+    throw error
+  }
 }
 
 const onSwitchPage = (page) => {

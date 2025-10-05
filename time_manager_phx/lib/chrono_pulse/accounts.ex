@@ -17,13 +17,34 @@ defmodule ChronoPulse.Accounts do
       [%User{}, ...]
 
   """
+  @doc """
+  Authenticates a user with the given email and password.
+  Returns `{:ok, user}` if the credentials are valid, otherwise returns `{:error, reason}`.
+  """
+  def authenticate_user(email, password) when is_binary(email) and is_binary(password) do
+    query = from u in User, where: u.email == ^email
+    
+    case Repo.one(query) do
+      nil ->
+        # Simulate password check to prevent timing attacks
+        Bcrypt.no_user_verify()
+        {:error, :not_found}
+        
+      user ->
+        if Bcrypt.verify_pass(password, user.hashed_password) do
+          {:ok, user}
+        else
+          {:error, :invalid_credentials}
+        end
+    end
+  end
+
   def list_users do
     Repo.all(User)
   end
 
   @doc """
   Search users by optional username and/or email (case-insensitive, partial match).
-
   If both params are nil or empty, returns all users.
   """
   def search_users(username, email) do
@@ -59,6 +80,7 @@ defmodule ChronoPulse.Accounts do
       %User{}
 
       iex> get_user!(456)
+      {:error, %Ecto.NoResultsError{}}
 
   """
   def get_user!(id), do: Repo.get!(User, id)
@@ -83,6 +105,7 @@ defmodule ChronoPulse.Accounts do
 
   @doc """
   Updates a user.
+
   ## Examples
 
       iex> update_user(user, %{first_name: "New Name"})
