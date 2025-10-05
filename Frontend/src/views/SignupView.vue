@@ -68,25 +68,27 @@
 
           <div>
             <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-              Password (for display only)
+              Password (Optional - for display only)
             </label>
             <input
               id="password"
               v-model.trim="password"
               type="password"
               class="form-control"
-              placeholder="Enter a password"
+              placeholder="Enter a password (not required for signup)"
             >
+            <p class="text-xs text-gray-500 mt-1">Note: Password is not currently required for account creation</p>
           </div>
 
           <button
             :disabled="loading"
             type="submit"
-            class="btn-primary-enhanced"
+            class="submit-button"
           >
-            {{ loading ? 'Creating Account...' : '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-        </svg>Create Account' }}
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
+            </svg>
+            {{ loading ? 'Creating Account...' : 'Create Account' }}
           </button>
 
           <div v-if="error" class="error">
@@ -124,18 +126,35 @@ const error = ref('')
 const onSubmit = async () => {
   loading.value = true
   error.value = ''
+
+  // Basic validation
+  if (!firstName.value || !lastName.value || !username.value || !email.value) {
+    error.value = 'Please fill in all required fields'
+    loading.value = false
+    return
+  }
+
   try {
-    const res = await usersApi.create({ username: username.value, email: email.value })
+    const userData = {
+      username: username.value,
+      email: email.value,
+      first_name: firstName.value,
+      last_name: lastName.value
+    }
+    console.log('Sending signup request:', userData)
+    const res = await usersApi.create(userData)
+    console.log('Signup response:', res)
     const user = res?.data || res
     if (!user || !user.id) {
-      error.value = 'Failed to create user'
+      error.value = 'Failed to create user - no user ID returned'
+      console.error('API response:', res)
       return
     }
-    const withNames = { ...user, first_name: firstName.value, last_name: lastName.value }
-    localStorage.setItem('currentUser', JSON.stringify(withNames))
+    localStorage.setItem('currentUser', JSON.stringify(user))
     router.push('/dashboard')
   } catch (e) {
-    error.value = 'Could not create account'
+    console.error('Signup error:', e)
+    error.value = e.message || 'Could not create account. Please try again.'
   } finally {
     loading.value = false
   }
@@ -147,5 +166,140 @@ const onSubmit = async () => {
   width: 1.25rem;
   height: 1.25rem;
   flex-shrink: 0;
+}
+
+.submit-button {
+  width: 100%;
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  color: #ffffff;
+  font-weight: bold;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  border: 2px solid transparent;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background-size: 200% 200%;
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+.submit-button::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg,
+    #2563eb,
+    #1d4ed8,
+    #3b82f6,
+    #60a5fa,
+    #2563eb,
+    #1d4ed8
+  );
+  border-radius: 0.75rem;
+  z-index: -1;
+  animation: glowingBorder 2s linear infinite;
+  background-size: 400% 400%;
+}
+
+.submit-button::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 70%
+  );
+  border-radius: 0.75rem;
+  z-index: -1;
+  animation: lightningMove 1.5s ease-in-out infinite;
+  opacity: 0.8;
+}
+
+.submit-button:hover {
+  background-position: right center;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.3);
+}
+
+.submit-button:hover::before {
+  animation-duration: 1s;
+}
+
+.submit-button:hover::after {
+  animation-duration: 1s;
+  opacity: 1;
+}
+
+.submit-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3), 0 4px 8px rgba(37, 99, 235, 0.2);
+}
+
+.submit-button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  animation: none;
+}
+
+.submit-button:disabled::before,
+.submit-button:disabled::after {
+  animation: none;
+  opacity: 0.5;
+}
+
+.submit-button svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: left center;
+  }
+  50% {
+    background-position: right center;
+  }
+}
+
+@keyframes glowingBorder {
+  0%, 100% {
+    background-position: 0% 50%;
+    opacity: 0.8;
+  }
+  50% {
+    background-position: 100% 50%;
+    opacity: 1;
+  }
+}
+
+@keyframes lightningMove {
+  0% {
+    background-position: -200% 0;
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    background-position: 200% 0;
+    opacity: 0;
+  }
 }
 </style>

@@ -12,6 +12,16 @@
     <main class="content">
       <RouterView />
     </main>
+
+    <!-- Floating Chatbot Button -->
+    <div class="chatbot-float" v-if="$route.path !== '/chat'">
+      <button @click="$router.push('/chat')" class="chatbot-button" title="Open Chat Assistant">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="chatbot-icon">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
+        </svg>
+        <span class="chatbot-pulse"></span>
+      </button>
+    </div>
   </div>
 </template>
 
@@ -105,6 +115,73 @@ html, body, #app {
   padding: 1.5rem 1rem;
 }
 
+/* Floating Chatbot Button */
+.chatbot-float {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  z-index: 1000;
+}
+
+.chatbot-button {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  overflow: visible;
+}
+
+.chatbot-button:hover {
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.6);
+}
+
+.chatbot-button:active {
+  transform: scale(0.95) translateY(-1px);
+}
+
+.chatbot-icon {
+  width: 24px;
+  height: 24px;
+  stroke-width: 2;
+}
+
+.chatbot-pulse {
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  border-radius: 50%;
+  border: 2px solid rgba(79, 70, 229, 0.3);
+  animation: chatbotPulse 2s infinite;
+}
+
+@keyframes chatbotPulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .nav {
@@ -121,6 +198,21 @@ html, body, #app {
   
   .content {
     padding: 1rem 0.75rem;
+  }
+  
+  .chatbot-float {
+    bottom: 1.5rem;
+    right: 1.5rem;
+  }
+  
+  .chatbot-button {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .chatbot-icon {
+    width: 20px;
+    height: 20px;
   }
 }
 </style>
