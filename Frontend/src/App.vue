@@ -2,11 +2,14 @@
   <div id="app">
     <header class="topbar">
       <nav class="nav">
-        <RouterLink to="/dashboard">Dashboard</RouterLink>
-        <RouterLink to="/working-times">Working Times</RouterLink>
-        <RouterLink to="/clockins">Clockins</RouterLink>
-        <span class="spacer"/>
-        <RouterLink to="/login">Logout</RouterLink>
+        <div class="nav-links">
+          <RouterLink to="/dashboard">Dashboard</RouterLink>
+          <RouterLink to="/working-times">Working Times</RouterLink>
+          <RouterLink to="/clockins">Clockins</RouterLink>
+        </div>
+        <div class="nav-actions">
+          <a href="#" class="logout-btn" @click.prevent="handleLogout">Logout</a>
+        </div>
       </nav>
     </header>
     <main class="content">
@@ -28,12 +31,13 @@
 <script setup>
 import { RouterLink, RouterView } from 'vue-router';
 
-console.log('✅ App.vue component loaded')
+const handleLogout = () => {
+  localStorage.removeItem('currentUser');
+  window.location.href = '/login';
+};
 </script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-
 * {
   box-sizing: border-box;
   margin: 0;
@@ -41,13 +45,33 @@ console.log('✅ App.vue component loaded')
 }
 
 html, body, #app {
-  height: 100%;
+  height: 100vh;
+  width: 100%;
+  overflow-x: hidden;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.topbar {
+  background-color: #ffffff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.logout-btn:hover {
+  background-color: #dc2626;
+}
+
+/* Global Styles */
+body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.5;
   color: #111827;
   background-color: #f9fafb;
 }
-
 #app {
   display: flex;
   flex-direction: column;
@@ -65,12 +89,15 @@ html, body, #app {
 }
 
 .nav {
-  max-width: 1200px;
+  /* max-width: 1200px; */
   margin: 0 auto;
   padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
+  /* justify-content: space-between; */
+  width: 100%;
   gap: 1.5rem;
+  width: 100%;
 }
 
 .nav a {
@@ -90,6 +117,7 @@ html, body, #app {
 .nav a.router-link-active {
   color: #2563eb;
   font-weight: 600;
+  position: relative;
 }
 
 .nav a.router-link-active::after {
@@ -100,22 +128,40 @@ html, body, #app {
   right: 0;
   height: 2px;
   background-color: #2563eb;
-  border-radius: 1px;
 }
 
-.spacer {
+/* Logout button styles */
+.nav .logout-btn {
+  background-color: #dc3545;
+  color: white !important;
+  padding: 0.4rem 1rem !important;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  margin-left: 1rem;
+}
+
+.nav .logout-btn:hover {
+  background-color: #bb2d3b;
+}
+
+.nav .logout-btn.router-link-active {
+  background-color: #bb2d3b;
+}
+
+.nav-links {
+  display: flex;
+  width: 50%;
+  gap: 1.5rem;
+  align-items: center;
   flex: 1;
 }
 
-.content {
-  flex: 1;
-  width: 100%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 1.5rem 1rem;
+.nav-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
-/* Floating Chatbot Button */
 .chatbot-float {
   position: fixed;
   bottom: 2rem;

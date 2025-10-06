@@ -20,8 +20,13 @@ defmodule ChronoPulse.Accounts.User do
     timestamps(type: :utc_datetime)
   end
 
-  @doc false
-  def changeset(user, attrs) do
+  @doc """
+  A user changeset for registration.
+  It's important to validate the length of both email and password.
+  Otherwise, databases may truncate the email without warnings, which
+  could lead to unpredictable or insecure behaviour.
+  """
+  def registration_changeset(user, attrs, opts \\ []) do
     user
     |> cast(attrs, [:username, :email, :first_name, :last_name, :password, :type])
     |> validate_required([:username, :email, :password, :type])

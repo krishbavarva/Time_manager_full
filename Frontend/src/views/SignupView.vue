@@ -68,16 +68,50 @@
 
           <div>
             <label for="password" class="block text-sm font-medium text-gray-700 mb-2">
-              Password (Optional - for display only)
+              Password
             </label>
             <input
               id="password"
               v-model.trim="password"
               type="password"
+              required
+              minlength="6"
               class="form-control"
-              placeholder="Enter a password (not required for signup)"
+              placeholder="Enter a strong password (min 6 characters)"
             >
-            <p class="text-xs text-gray-500 mt-1">Note: Password is not currently required for account creation</p>
+            <p class="text-xs text-gray-500 mt-1">Password must be at least 6 characters long</p>
+          </div>
+
+          <div>
+            <label for="confirmPassword" class="block text-sm font-medium text-gray-700 mb-2">
+              Confirm Password
+            </label>
+            <input
+              id="confirmPassword"
+              v-model.trim="confirmPassword"
+              type="password"
+              required
+              class="form-control"
+              placeholder="Confirm your password"
+            >
+          </div>
+
+          <div>
+            <label for="role" class="block text-sm font-medium text-gray-700 mb-2">
+              Account Type
+            </label>
+            <select
+              id="role"
+              v-model="selectedRole"
+              required
+              class="form-control"
+            >
+              <option value="" disabled>Select account type</option>
+              <option value="employee">Employee</option>
+              <option value="manager">Manager</option>
+              <option value="admin">Administrator</option>
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Managers can manage teams, employees can only track time</p>
           </div>
 
           <button
@@ -112,7 +146,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter, RouterLink } from 'vue-router'
-import { usersApi } from '../api/users'
+import { usersApi, ROLES } from '../api/users'
 
 const router = useRouter()
 const firstName = ref('')
@@ -120,6 +154,8 @@ const lastName = ref('')
 const username = ref('')
 const email = ref('')
 const password = ref('')
+const confirmPassword = ref('')
+const selectedRole = ref('employee') // Default role
 const loading = ref(false)
 const error = ref('')
 
@@ -127,9 +163,23 @@ const onSubmit = async () => {
   loading.value = true
   error.value = ''
 
-  // Basic validation
-  if (!firstName.value || !lastName.value || !username.value || !email.value) {
+  // Validation
+  if (!firstName.value || !lastName.value || !username.value || !email.value || !password.value) {
     error.value = 'Please fill in all required fields'
+    loading.value = false
+    return
+  }
+
+  // Password validation
+  if (password.value.length < 6) {
+    error.value = 'Password must be at least 6 characters long'
+    loading.value = false
+    return
+  }
+
+  // Check if passwords match
+  if (password.value !== confirmPassword.value) {
+    error.value = 'Passwords do not match'
     loading.value = false
     return
   }
@@ -139,19 +189,27 @@ const onSubmit = async () => {
       username: username.value,
       email: email.value,
       first_name: firstName.value,
-      last_name: lastName.value
+      last_name: lastName.value,
+      password: password.value,
+      role: selectedRole.value
     }
-    console.log('Sending signup request:', userData)
+    
+    console.log('Sending signup request:', { ...userData, password: '***' })
     const res = await usersApi.create(userData)
     console.log('Signup response:', res)
+    
     const user = res?.data || res
     if (!user || !user.id) {
       error.value = 'Failed to create user - no user ID returned'
       console.error('API response:', res)
       return
     }
-    localStorage.setItem('currentUser', JSON.stringify(user))
-    router.push('/dashboard')
+    
+    // Don't log in automatically, redirect to login page
+    router.push({
+      path: '/login',
+      query: { registered: 'true' }
+    })
   } catch (e) {
     console.error('Signup error:', e)
     error.value = e.message || 'Could not create account. Please try again.'

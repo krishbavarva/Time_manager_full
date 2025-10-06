@@ -47,6 +47,32 @@ defmodule ChronoPulseWeb do
     end
   end
 
+  def view do
+    quote do
+      use Phoenix.View,
+        root: "lib/chrono_pulse_web/templates",
+        namespace: ChronoPulseWeb
+
+      # Import convenience functions from controllers
+      import Phoenix.Controller,
+        only: [get_csrf_token: 0, get_flash: 1, get_flash: 2, view_module: 1, view_template: 1]
+
+      # Include shared imports and aliases for views
+      unquote(view_helpers())
+    end
+  end
+
+  defp view_helpers do
+    quote do
+      # Import basic rendering functionality (render, render_layout, etc)
+      import Phoenix.View
+
+      import ChronoPulseWeb.ErrorHelpers
+      import ChronoPulseWeb.Gettext
+      alias ChronoPulseWeb.Router.Helpers, as: Routes
+    end
+  end
+
   def verified_routes do
     quote do
       use Phoenix.VerifiedRoutes,

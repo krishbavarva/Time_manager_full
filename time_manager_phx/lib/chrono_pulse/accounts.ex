@@ -16,7 +16,6 @@ defmodule ChronoPulse.Accounts do
 
   @doc """
   Search users by optional username and/or email (case-insensitive, partial match).
-
   If both params are nil or empty, returns all users.
   """
   def search_users(username, email) do
@@ -51,9 +50,9 @@ defmodule ChronoPulse.Accounts do
   Creates a user.
   Ensures password is hashed and type is validated.
   """
-  def create_user(attrs) do
+  def create_user(attrs \\ %{}) do
     %User{}
-    |> User.changeset(attrs)
+    |> User.registration_changeset(attrs)
     |> Repo.insert()
   end
 
@@ -61,9 +60,9 @@ defmodule ChronoPulse.Accounts do
   Updates a user.
   Will also re-hash password if provided in attrs.
   """
-  def update_user(%User{} = user, attrs) do
+  def update_user(%User{} = user, attrs, opts \\ []) do
     user
-    |> User.changeset(attrs)
+    |> User.update_changeset(attrs, opts)
     |> Repo.update()
   end
 

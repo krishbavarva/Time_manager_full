@@ -1,29 +1,29 @@
 <template>
-  <section class="clockins-view">
-    <div class="page-header">
+  <section class="bg-white text-gray-800">
+    <div class="flex justify-between items-center mb-8 flex-wrap gap-4">
       <div>
-        <h1>Time Tracking</h1>
-        <p class="text-muted">Manage your work hours and clock in/out</p>
+        <h1 class="text-3xl font-bold text-gray-900 m-0">Time Tracking</h1>
+        <p class="text-gray-500 text-sm">Manage your work hours and clock in/out</p>
       </div>
-      <div class="date-picker">
+      <div class="flex items-center gap-2">
         <label for="date-filter" class="text-sm text-gray-600 mr-2">View Date:</label>
         <input 
           type="date" 
           id="date-filter" 
           v-model="selectedDate" 
           :max="today"
-          class="form-control text-sm py-1 px-2 border rounded"
+          class="border border-gray-300 rounded-md py-1 px-2 text-sm focus:outline-none focus:border-blue-600 focus:ring focus:ring-blue-600 focus:ring-opacity-10"
           @change="handleDateChange"
         >
       </div>
     </div>
     
-    <div class="card">
-      <h2 class="mb-4">Clock In/Out</h2>
+    <div class="mt-6 p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
+      <h2 class="text-xl font-semibold text-gray-900 m-0 mb-4">Clock In/Out</h2>
       <div class="flex flex-wrap items-center gap-4 mb-6">
         <button 
           @click="toggle" 
-          class="btn btn-primary"
+          class="px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 hover:border-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
           :disabled="creating"
         >
           {{ creating ? 'Processing...' : isClockedIn ? 'Clock Out' : 'Clock In' }}
@@ -31,7 +31,7 @@
         <button 
           type="button" 
           @click="load" 
-          class="btn btn-outline"
+          class="px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 hover:border-gray-400"
         >
           Refresh
         </button>
@@ -51,30 +51,30 @@
         {{ error }}
       </div>
 
-      <div v-if="filteredClockins.length === 0" class="no-data">
+      <div v-if="filteredClockins.length === 0" class="p-8 text-center text-gray-500">
         No clock-in/out records found for {{ formattedSelectedDate }}
       </div>
       <div v-else class="overflow-x-auto">
-        <div class="date-display mb-4">
+        <div class="mb-4 p-3 bg-gray-50 rounded-lg text-gray-700">
           Showing records for: <strong>{{ formattedSelectedDate }}</strong>
         </div>
-        <table class="table">
+        <table class="w-full border-separate border-spacing-0">
           <thead>
             <tr>
-              <th>Time</th>
-              <th>Status</th>
-              <th>Location</th>
+              <th class="text-left py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">Time</th>
+              <th class="text-left py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">Status</th>
+              <th class="text-left py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">Location</th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="filteredClockins.length === 0">
-              <td colspan="3" class="text-center py-4 text-gray-500">
+              <td colspan="3" class="text-center py-4 px-4 border-b border-gray-200 text-gray-500">
                 No clock-in/out records found for {{ formattedSelectedDate }}
               </td>
             </tr>
             <tr v-else v-for="c in filteredClockins" :key="c.id" class="hover:bg-gray-50">
-              <td class="whitespace-nowrap">{{ fmtIso(c.time) }}</td>
-              <td>
+              <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtIso(c.time) }}</td>
+              <td class="py-3 px-4 border-b border-gray-200">
                 <span 
                   class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
                   :class="c.status ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'"
@@ -82,7 +82,7 @@
                   {{ c.status ? 'Clocked In' : 'Clocked Out' }}
                 </span>
               </td>
-              <td class="whitespace-nowrap">
+              <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200">
                 <a 
                   v-if="c.latitude && c.longitude" 
                   :href="`https://www.google.com/maps?q=${c.latitude},${c.longitude}`" 
@@ -90,7 +90,7 @@
                   class="text-blue-600 hover:underline flex items-center"
                   title="View on Google Maps"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" class="location-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
@@ -100,7 +100,7 @@
               </td>
             </tr>
             <tr v-if="list.length === 0">
-              <td colspan="3" class="text-center py-4 text-gray-500">
+              <td colspan="3" class="text-center py-4 px-4 border-b border-gray-200 text-gray-500">
                 No clock-in records found
               </td>
             </tr>
@@ -109,9 +109,9 @@
       </div>
     </div>
 
-    <div class="card mt-6">
+    <div class="mt-6 p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
       <div class="flex flex-wrap items-center justify-between mb-4">
-        <h2>Working Time Summary</h2>
+        <h2 class="text-xl font-semibold text-gray-900 m-0">Working Time Summary</h2>
         <div class="flex items-center gap-2">
           <label class="text-sm text-gray-600">Filter by date:</label>
           <input 
@@ -119,7 +119,7 @@
             v-model="chartsDate" 
             @change="loadCharts"
             :max="today"
-            class="form-control text-sm py-1 px-2 border rounded"
+            class="border border-gray-300 rounded-md py-1 px-2 text-sm focus:outline-none focus:border-blue-600 focus:ring focus:ring-blue-600 focus:ring-opacity-10"
           />
         </div>
       </div>
@@ -132,26 +132,26 @@
       </div>
       <template v-else>
         <div class="overflow-x-auto">
-          <table class="table">
+          <table class="w-full border-separate border-spacing-0">
             <thead>
               <tr>
-                <th class="whitespace-nowrap">Date</th>
-                <th class="text-right">Duration</th>
-                <th class="text-right">Hours</th>
+                <th class="whitespace-nowrap text-left py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">Date</th>
+                <th class="text-right py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">Duration</th>
+                <th class="text-right py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">Hours</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="r in hoursRows" :key="r.date" class="hover:bg-gray-50">
-                <td class="whitespace-nowrap">{{ r.date }}</td>
-                <td class="text-right font-mono">{{ fmtMMSS(r.minutes * 60) }}</td>
-                <td class="text-right">{{ (r.minutes / 60).toFixed(1) }}h</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ r.date }}</td>
+                <td class="text-right font-mono py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtMMSS(r.minutes * 60) }}</td>
+                <td class="text-right py-3 px-4 border-b border-gray-200 text-gray-800">{{ (r.minutes / 60).toFixed(1) }}h</td>
               </tr>
               <tr class="font-medium bg-gray-50">
-                <td>Total</td>
-                <td class="text-right font-mono">
+                <td class="py-3 px-4 border-b border-gray-200">Total</td>
+                <td class="text-right font-mono py-3 px-4 border-b border-gray-200">
                   {{ fmtMMSS(hoursRows.reduce((sum, r) => sum + (r.minutes * 60), 0)) }}
                 </td>
-                <td class="text-right">
+                <td class="text-right py-3 px-4 border-b border-gray-200">
                   {{ (hoursRows.reduce((sum, r) => sum + r.minutes, 0) / 60).toFixed(1) }}h
                 </td>
               </tr>
@@ -161,41 +161,41 @@
       </template>
     </div>
 
-    <div class="card mt-6">
-      <h2>Breaks</h2>
+    <div class="mt-6 p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
+      <h2 class="text-xl font-semibold text-gray-900 m-0 mb-4">Breaks</h2>
       <div v-if="breaks.length === 0" class="p-4 text-center text-gray-500">
         No break data available.
       </div>
       <template v-else>
         <div class="overflow-x-auto">
-          <table class="table">
+          <table class="w-full border-separate border-spacing-0">
             <thead>
               <tr>
-                <th>Start</th>
-                <th>End</th>
-                <th>Minutes</th>
-                <th>Duration</th>
+                <th class="text-left py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">Start</th>
+                <th class="text-left py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">End</th>
+                <th class="text-left py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">Minutes</th>
+                <th class="text-left py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">Duration</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(b, i) in breaks" :key="i" class="hover:bg-gray-50">
-                <td class="whitespace-nowrap">{{ fmtIso(b.start) }}</td>
-                <td class="whitespace-nowrap">{{ fmtIso(b.end) }}</td>
-                <td>{{ (b.seconds ? (b.seconds/60).toFixed(2) : b.minutes) }}</td>
-                <td class="whitespace-nowrap">{{ fmtMMSS(b.seconds ?? (b.minutes * 60)) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtIso(b.start) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtIso(b.end) }}</td>
+                <td class="py-3 px-4 border-b border-gray-200 text-gray-800">{{ (b.seconds ? (b.seconds/60).toFixed(2) : b.minutes) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtMMSS(b.seconds ?? (b.minutes * 60)) }}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="chart-box mt-4">
+        <div class="relative h-52 mt-6 bg-white rounded-lg border border-gray-200 p-4">
           <canvas ref="breaksCanvas" height="120"></canvas>
         </div>
       </template>
     </div>
 
-    <div class="card mt-6">
+    <div class="mt-6 p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
       <div class="flex flex-wrap items-center justify-between mb-4">
-        <h2>Working Sessions</h2>
+        <h2 class="text-xl font-semibold text-gray-900 m-0">Working Sessions</h2>
         <div class="flex items-center gap-2">
           <label class="text-sm text-gray-600">Filter by date:</label>
           <input 
@@ -203,7 +203,7 @@
             v-model="sessionsDate" 
             @change="filterSessionsByDate"
             :max="today"
-            class="form-control text-sm py-1 px-2 border rounded"
+            class="border border-gray-300 rounded-md py-1 px-2 text-sm focus:outline-none focus:border-blue-600 focus:ring focus:ring-blue-600 focus:ring-opacity-10"
           />
         </div>
       </div>
@@ -212,41 +212,41 @@
       </div>
       <template v-else>
         <div class="overflow-x-auto">
-          <table class="table">
+          <table class="w-full border-separate border-spacing-0">
             <thead>
               <tr>
-                <th>Start</th>
-                <th>End</th>
-                <th>Minutes</th>
-                <th>Duration</th>
+                <th class="text-left py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">Start</th>
+                <th class="text-left py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">End</th>
+                <th class="text-left py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">Minutes</th>
+                <th class="text-left py-3 px-4 border-b border-gray-200 bg-gray-50 font-semibold text-gray-700 uppercase text-xs tracking-wider">Duration</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="(s, i) in filteredSessions" :key="i" class="hover:bg-gray-50">
-                <td class="whitespace-nowrap">{{ fmtIso(s.start) }}</td>
-                <td class="whitespace-nowrap">{{ fmtIso(s.end) }}</td>
-                <td>{{ (s.seconds ? (s.seconds/60).toFixed(2) : s.minutes) }}</td>
-                <td class="whitespace-nowrap">{{ fmtMMSS(s.seconds ?? (s.minutes * 60)) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtIso(s.start) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtIso(s.end) }}</td>
+                <td class="py-3 px-4 border-b border-gray-200 text-gray-800">{{ (s.seconds ? (s.seconds/60).toFixed(2) : s.minutes) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtMMSS(s.seconds ?? (s.minutes * 60)) }}</td>
               </tr>
               <tr v-if="filteredSessions.length > 0" class="font-medium bg-gray-50">
-                <td colspan="2" class="text-right pr-4">Total Work Time:</td>
-                <td>{{ totalWorkMinutes.toFixed(2) }}</td>
-                <td class="whitespace-nowrap">{{ fmtMMSS(totalWorkMinutes * 60) }}</td>
+                <td colspan="2" class="text-right pr-4 py-3 px-4 border-b border-gray-200">Total Work Time:</td>
+                <td class="py-3 px-4 border-b border-gray-200">{{ totalWorkMinutes.toFixed(2) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200">{{ fmtMMSS(totalWorkMinutes * 60) }}</td>
               </tr>
               <tr v-if="filteredBreaks.length > 0" class="font-medium bg-gray-50">
-                <td colspan="2" class="text-right pr-4">Total Break Time:</td>
-                <td>{{ totalBreakMinutes.toFixed(2) }}</td>
-                <td class="whitespace-nowrap">{{ fmtMMSS(totalBreakMinutes * 60) }}</td>
+                <td colspan="2" class="text-right pr-4 py-3 px-4 border-b border-gray-200">Total Break Time:</td>
+                <td class="py-3 px-4 border-b border-gray-200">{{ totalBreakMinutes.toFixed(2) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200">{{ fmtMMSS(totalBreakMinutes * 60) }}</td>
               </tr>
               <tr v-if="filteredSessions.length > 0 || filteredBreaks.length > 0" class="font-bold bg-gray-100">
-                <td colspan="2" class="text-right pr-4">Total Time (Work + Break):</td>
-                <td>{{ (totalWorkMinutes + totalBreakMinutes).toFixed(2) }}</td>
-                <td class="whitespace-nowrap">{{ fmtMMSS((totalWorkMinutes + totalBreakMinutes) * 60) }}</td>
+                <td colspan="2" class="text-right pr-4 py-3 px-4 border-b border-gray-200">Total Time (Work + Break):</td>
+                <td class="py-3 px-4 border-b border-gray-200">{{ (totalWorkMinutes + totalBreakMinutes).toFixed(2) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200">{{ fmtMMSS((totalWorkMinutes + totalBreakMinutes) * 60) }}</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div class="chart-box mt-4">
+        <div class="relative h-52 mt-6 bg-white rounded-lg border border-gray-200 p-4">
           <canvas ref="sessionsCanvas" height="120"></canvas>
         </div>
       </template>
@@ -870,350 +870,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.clockins-view {
-  background-color: #ffffff;
-  color: #1f2937;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.date-picker {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.card { 
-  margin-top: 1.5rem; 
-  padding: 1.5rem; 
-  background: #ffffff; 
-  border: 1px solid #e5e7eb; 
-  border-radius: 12px; 
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.table { 
-  width: 100%; 
-  border-collapse: separate;
-  border-spacing: 0;
-}
-
-th, td { 
-  text-align: left; 
-  padding: 0.75rem 1rem; 
-  border-bottom: 1px solid #e5e7eb; 
-  color: #1f2937;
-}
-
-th {
-  background-color: #f9fafb;
-  font-weight: 600;
-  color: #374151;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-}
-
-tr:hover {
-  background-color: #f9fafb;
-}
-
-.error { 
-  color: #dc2626;
-  background-color: #fef2f2;
-  border-radius: 0.5rem;
-}
-
-button { 
-  padding: 0.5rem 1rem; 
-  border-radius: 8px; 
-  font-weight: 500; 
-  transition: all 0.2s;
-  cursor: pointer;
-}
-
-button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: #2563eb; 
-  color: white;
-  border: 1px solid #2563eb;
-}
-
-.btn-primary:hover:not(:disabled) {
-  background: #1d4ed8;
-  border-color: #1d4ed8;
-}
-
-.btn-outline {
-  background: white;
-  border: 1px solid #d1d5db;
-  color: #374151;
-}
-
-.btn-outline:hover {
-  background: #f9fafb;
-  border-color: #9ca3af;
-}
-
-.hint { 
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.chart-box { 
-  position: relative; 
-  height: 200px; 
-  margin-top: 1.5rem;
-  background: white;
-  border-radius: 0.5rem;
-  border: 1px solid #e5e7eb;
-  padding: 1rem;
-}
-
-.text-muted {
-  color: #6b7280;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.25rem 0.75rem;
-  border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.bg-green-100 { background-color: #dcfce7; }
-.text-green-800 { color: #166534; }
-.bg-gray-100 { background-color: #f3f4f6; }
-.text-gray-800 { color: #1f2937; }
-
-.location-icon {
-  height: 16px;
-  width: 16px;
-  margin-right: 0.25rem;
-}
-
-.no-data {
-  padding: 2rem;
-  text-align: center;
-  color: #6b7280;
-}
-
-.date-display {
-  padding: 0.75rem;
-  background-color: #f9fafb;
-  border-radius: 0.5rem;
-  color: #374151;
-}
-
-.form-control {
-  border: 1px solid #d1d5db;
-  border-radius: 0.375rem;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.875rem;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-h1 {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #111827;
-  margin: 0;
-}
-
-h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #111827;
-  margin: 0;
-}
-
-.overflow-x-auto {
-  overflow-x: auto;
-}
-
-.whitespace-nowrap {
-  white-space: nowrap;
-}
-
-.text-center {
-  text-align: center;
-}
-
-.text-right {
-  text-align: right;
-}
-
-.text-sm {
-  font-size: 0.875rem;
-}
-
-.text-gray-600 {
-  color: #4b5563;
-}
-
-.text-gray-500 {
-  color: #6b7280;
-}
-
-.text-gray-400 {
-  color: #9ca3af;
-}
-
-.text-blue-600 {
-  color: #2563eb;
-}
-
-.text-red-700 {
-  color: #b91c1c;
-}
-
-.bg-gray-50 {
-  background-color: #f9fafb;
-}
-
-.bg-red-50 {
-  background-color: #fef2f2;
-}
-
-.bg-green-500 {
-  background-color: #22c55e;
-}
-
-.rounded {
-  border-radius: 0.375rem;
-}
-
-.rounded-lg {
-  border-radius: 0.5rem;
-}
-
-.rounded-full {
-  border-radius: 9999px;
-}
-
-.font-medium {
-  font-weight: 500;
-}
-
-.font-bold {
-  font-weight: 700;
-}
-
-.font-mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-}
-
-.flex {
-  display: flex;
-}
-
-.flex-wrap {
-  flex-wrap: wrap;
-}
-
-.items-center {
-  align-items: center;
-}
-
-.justify-between {
-  justify-content: space-between;
-}
-
-.gap-2 {
-  gap: 0.5rem;
-}
-
-.gap-4 {
-  gap: 1rem;
-}
-
-.mb-4 {
-  margin-bottom: 1rem;
-}
-
-.mb-6 {
-  margin-bottom: 1.5rem;
-}
-
-.mt-4 {
-  margin-top: 1rem;
-}
-
-.mt-6 {
-  margin-top: 1.5rem;
-}
-
-.ml-auto {
-  margin-left: auto;
-}
-
-.mr-2 {
-  margin-right: 0.5rem;
-}
-
-.p-4 {
-  padding: 1rem;
-}
-
-.px-2 {
-  padding-left: 0.5rem;
-  padding-right: 0.5rem;
-}
-
-.py-1 {
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-}
-
-.py-4 {
-  padding-top: 1rem;
-  padding-bottom: 1rem;
-}
-
-.px-4 {
-  padding-left: 1rem;
-  padding-right: 1rem;
-}
-
-.py-2 {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-}
-
-.pr-4 {
-  padding-right: 1rem;
-}
-
-.w-3 {
-  width: 0.75rem;
-}
-
-.h-3 {
-  height: 0.75rem;
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
@@ -1221,17 +877,5 @@ h2 {
   50% {
     opacity: 0.5;
   }
-}
-
-.inline-flex {
-  display: inline-flex;
-}
-
-.hover\:bg-gray-50:hover {
-  background-color: #f9fafb;
-}
-
-.hover\:underline:hover {
-  text-decoration: underline;
 }
 </style>
