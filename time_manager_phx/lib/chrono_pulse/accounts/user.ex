@@ -15,7 +15,7 @@ defmodule ChronoPulse.Accounts.User do
     # auth fields
     field :password, :string, virtual: true
     field :hashed_password, :string
-    field :type, :string, default: "Employee"
+    field :role, :string, default: "employee"
 
     timestamps(type: :utc_datetime)
   end
@@ -28,9 +28,9 @@ defmodule ChronoPulse.Accounts.User do
   """
   def registration_changeset(user, attrs, opts \\ []) do
     user
-    |> cast(attrs, [:username, :email, :first_name, :last_name, :password, :type])
-    |> validate_required([:username, :email, :password, :type])
-    |> validate_inclusion(:type, ["Employee", "Manager", "Admin"])
+    |> cast(attrs, [:username, :email, :first_name, :last_name, :password, :role])
+    |> validate_required([:username, :email, :password, :role])
+    |> validate_inclusion(:role, ["employee", "manager", "admin"])
     |> unique_constraint(:email)
     |> unique_constraint(:username)
     |> validate_length(:password, min: 6)

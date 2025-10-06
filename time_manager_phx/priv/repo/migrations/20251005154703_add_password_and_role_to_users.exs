@@ -2,14 +2,14 @@ defmodule ChronoPulse.Repo.Migrations.AddPasswordAndRoleToUsers do
   use Ecto.Migration
 
   def change do
-    alter table(:users) do
-      add :hashed_password, :string, null: true
-      add :role, :string, null: false, default: "employee"
-    end
+    # alter table(:users) do
+    #   # add :hashed_password, :string, null: true
+    #   add :role, :string, null: false, default: "employee"
+    # end
 
     # Backfill existing users with a default hashed password
     execute "UPDATE users SET hashed_password = 'temporary_password_123' WHERE hashed_password IS NULL"
-    
+
     # Now we can alter the column to be non-null
     alter table(:users) do
       modify :hashed_password, :string, null: false
