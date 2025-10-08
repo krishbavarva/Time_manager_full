@@ -1,10 +1,8 @@
 // Lightweight HTTP client using fetch with base URL, JSON helpers, and error handling
-// Usage: import { http } from './http'
-// const res = await http.get('/api/users')
 
-// Default to relative base URL so we can use Vite dev proxy to avoid CORS in development.
-// You can override with VITE_API_BASE_URL (e.g., production).
-const DEFAULT_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://192.168.243.128:4000'
+// Set absolute backend URL for Cordova and production
+const DEFAULT_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://172.20.10.3:4000' // <-- your backend IP and port
+
 
 const buildUrl = (path, query) => {
   const base = DEFAULT_BASE_URL.replace(/\/$/, '')

@@ -42,7 +42,7 @@ defmodule ChronoPulse.MixProject do
       {:gettext, "~> 0.26"},
       {:bcrypt_elixir, "~> 3.1"},
       {:bandit, "~> 1.5"},
-      {:bcrypt_elixir, "~> 3.0"}          # HTTP server for Phoenix in prod
+      {:cors_plug, "~> 3.0"}          # HTTP server for Phoenix in prod
     ]
   end
 

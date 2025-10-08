@@ -80,8 +80,8 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usersApi } from '../api/users'
+import { http } from '../api/http'   // ✅ import your custom HTTP client
 import LoginPage from '../components/loginPage.vue'
-import { getCurrentLocation } from '../utils/geolocation'
 
 const router = useRouter()
 const loading = ref(false)
@@ -113,7 +113,6 @@ const handleSignin = async ({ email, password }) => {
   }
   
   try {
-    // Verify password with the backend and get user data
     const isAuthenticated = await verifyPassword(email, password)
     
     if (!isAuthenticated) {
@@ -121,11 +120,9 @@ const handleSignin = async ({ email, password }) => {
       return
     }
     
-    // Find user in the local users list (or fetch fresh user data from the server)
     const user = users.value.find(u => u.email === email)
     
     if (user) {
-      // Store user data (without sensitive information)
       const userData = {
         id: user.id,
         email: user.email,
@@ -140,11 +137,7 @@ const handleSignin = async ({ email, password }) => {
     }
     
     loginSuccess.value = true
-    
-    // Redirect to dashboard after a short delay
-    setTimeout(() => {
-      router.push('/dashboard')
-    }, 1500)
+    setTimeout(() => router.push('/dashboard'), 1500)
     
   } catch (err) {
     console.error('Login error:', err)
@@ -152,27 +145,17 @@ const handleSignin = async ({ email, password }) => {
   }
 }
 
+// ✅ Use http client for API call
 const verifyPassword = async (email, password) => {
   try {
-    const response = await fetch('/api/sessions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    })
+    const response = await http.post('/api/sessions', { email, password })
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Authentication failed')
-    }
-
-    const data = await response.json()
-    
-    // Store the token in localStorage
-    if (data.data && data.data.token) {
-      localStorage.setItem('authToken', data.data.token)
+    // Depending on your backend response structure:
+    if (response?.data?.token) {
+      localStorage.setItem('authToken', response.data.token)
       return true
     }
-    
+
     return false
   } catch (error) {
     console.error('Authentication error:', error)

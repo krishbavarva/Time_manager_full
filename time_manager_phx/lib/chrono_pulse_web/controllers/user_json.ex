@@ -22,7 +22,8 @@ defmodule ChronoPulseWeb.UserJSON do
       email: user.email,
       first_name: user.first_name,
       last_name: user.last_name,
-      role: user.role   # <- added here
+      role: user.role,   # <- added here
+      pay: user.pay    # <- added here
     }
   end
 end
