@@ -10,8 +10,8 @@
           <RouterLink to="/clockins">Clockins</RouterLink>
           <RouterLink v-if="isAdmin" to="/admin/users">Users</RouterLink>
           <RouterLink v-if="isAdmin" to="/admin/teams">Admin Teams</RouterLink>
-          <RouterLink v-if="isAdmin" to="/teams">Teams</RouterLink>
-          <RouterLink v-if="isAdmin" to="/admin/teams" class="create-team-btn">Create Team</RouterLink>
+          <RouterLink v-if="isManager" to="/teams">Teams</RouterLink>
+          <!-- <RouterLink v-if="isAdmin" to="/admin/teams" class="create-team-btn">Create Team</RouterLink> -->
         </div>
         <div class="nav-actions">
           <a href="#" class="logout-btn" @click.prevent="handleLogout">Logout</a>
@@ -73,17 +73,17 @@ onMounted(() => {
       loadCurrentUser();
     }
   });
+
+  // Listen for focus events to check for login state changes
+  window.addEventListener('focus', () => {
+    loadCurrentUser();
+  });
 });
 
-// Watch for changes in currentUser to handle logout scenarios
-watch(currentUser, (newUser) => {
-  if (newUser === null) {
-    // User has been logged out, redirect to login if not already there
-    if (window.location.pathname !== '/login') {
-      window.location.href = '/login';
-    }
-  }
-});
+// Global method to refresh user state (can be called from other components)
+window.refreshUserState = () => {
+  loadCurrentUser();
+};
 
 const isAuthenticated = computed(() => {
   return currentUser.value !== null &&

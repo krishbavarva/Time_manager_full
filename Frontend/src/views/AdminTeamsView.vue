@@ -288,6 +288,149 @@
         </div>
       </div>
     </div>
+
+    <!-- Edit Team Modal -->
+    <div v-if="showEditModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Team</h3>
+
+          <form @submit.prevent="editTeam" class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Team Name</label>
+              <input
+                v-model="editTeam.description"
+                type="text"
+                required
+                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                placeholder="Enter team name"
+              />
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4">
+              <button
+                type="button"
+                @click="closeEditModal"
+                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                :disabled="editing"
+                class="px-4 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {{ editing ? 'Updating...' : 'Update Team' }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Manage Employees Modal -->
+    <div v-if="showManageEmployeesModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Manage Team Members</h3>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Team</label>
+            <p class="text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ selectedTeam?.description || 'Unnamed Team' }}</p>
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Current Members ({{ selectedEmployees.length }})</label>
+            <div v-if="availableEmployees.length > 0" class="max-h-40 overflow-y-auto border border-gray-300 rounded-md">
+              <div v-for="employee in availableEmployees" :key="employee.id" class="flex items-center p-2">
+                <input
+                  type="checkbox"
+                  :value="employee.id"
+                  v-model="selectedEmployees"
+                  class="mr-2"
+                />
+                <label class="text-sm text-gray-900">
+                  {{ employee.first_name && employee.last_name
+                      ? `${employee.first_name} ${employee.last_name}`
+                      : employee.username || 'Unknown Employee' }}
+                </label>
+              </div>
+            </div>
+            <p v-else class="text-sm text-gray-500 italic">No employees available</p>
+          </div>
+
+          <div class="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              @click="closeManageEmployeesModal"
+              class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="manageEmployees"
+              :disabled="managingEmployees"
+              class="px-4 py-2 bg-purple-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-purple-700 disabled:opacity-50"
+            >
+              {{ managingEmployees ? 'Updating...' : 'Update Members' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assign Managers Modal -->
+    <div v-if="showAssignManagersModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div class="mt-3">
+          <h3 class="text-lg font-medium text-gray-900 mb-4">Assign Team Managers</h3>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Team</label>
+            <p class="text-sm text-gray-900 bg-gray-50 p-2 rounded">{{ selectedTeam?.description || 'Unnamed Team' }}</p>
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Select Managers</label>
+            <div v-if="availableManagers.length > 0" class="max-h-40 overflow-y-auto border border-gray-300 rounded-md">
+              <div v-for="manager in availableManagers" :key="manager.id" class="flex items-center p-2">
+                <input
+                  type="checkbox"
+                  :value="manager.id"
+                  v-model="selectedManagers"
+                  class="mr-2"
+                />
+                <label class="text-sm text-gray-900">
+                  {{ manager.first_name && manager.last_name
+                      ? `${manager.first_name} ${manager.last_name}`
+                      : manager.username || 'Unknown Manager' }}
+                </label>
+              </div>
+            </div>
+            <p v-else class="text-sm text-gray-500 italic">No managers available</p>
+          </div>
+
+          <div class="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              @click="closeAssignManagersModal"
+              class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              @click="assignManagers"
+              :disabled="assigning"
+              class="px-4 py-2 bg-orange-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50"
+            >
+              {{ assigning ? 'Updating...' : 'Update Managers' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -415,9 +558,12 @@ export default {
     },
 
     showManageEmployeesModal(team, currentMembers) {
+      console.log('Manage Employees button clicked for team:', team)
+      console.log('Current members:', currentMembers)
       this.selectedTeam = team
       this.selectedEmployees = currentMembers ? currentMembers.map(member => member.id) : []
       this.showManageEmployeesModal = true
+      console.log('showManageEmployeesModal set to:', this.showManageEmployeesModal)
     },
 
     closeManageEmployeesModal() {
@@ -427,9 +573,11 @@ export default {
     },
 
     showAssignManagersModal(team) {
+      console.log('Assign Managers button clicked for team:', team)
       this.selectedTeam = team
       this.selectedManagers = team.manager ? [team.manager.id] : []
       this.showAssignManagersModal = true
+      console.log('showAssignManagersModal set to:', this.showAssignManagersModal)
     },
 
     closeAssignManagersModal() {
@@ -471,13 +619,57 @@ export default {
     async manageEmployees() {
       try {
         this.managingEmployees = true
-        // For now, this is a placeholder - would need backend API to support bulk employee management
+        console.log('Managing employees for team:', this.selectedTeam.id)
+        console.log('Selected employees:', this.selectedEmployees)
+
+        if (!this.selectedTeam || !this.selectedTeam.id) {
+          throw new Error('No team selected')
+        }
+
+        // For now, we'll handle individual employee additions/removals
+        // In a real implementation, you might want to send all changes at once
+
+        // Get current team employees
+        const currentEmployees = this.selectedTeam.employees || []
+        const currentEmployeeIds = currentEmployees.map(emp => emp.id)
+
+        // Find employees to add (in selectedEmployees but not in current team)
+        const employeesToAdd = this.selectedEmployees.filter(empId => !currentEmployeeIds.includes(empId))
+
+        // Find employees to remove (in current team but not in selectedEmployees)
+        const employeesToRemove = currentEmployeeIds.filter(empId => !this.selectedEmployees.includes(empId))
+
+        console.log('Employees to add:', employeesToAdd)
+        console.log('Employees to remove:', employeesToRemove)
+
+        // Process additions
+        for (const employeeId of employeesToAdd) {
+          try {
+            await teamsApi.addEmployee(this.selectedTeam.id, employeeId)
+            console.log('Added employee:', employeeId)
+          } catch (error) {
+            console.error('Failed to add employee:', employeeId, error)
+            this.$toast?.error(`Failed to add employee to team`)
+          }
+        }
+
+        // Process removals
+        for (const employeeId of employeesToRemove) {
+          try {
+            await teamsApi.removeEmployee(this.selectedTeam.id, employeeId)
+            console.log('Removed employee:', employeeId)
+          } catch (error) {
+            console.error('Failed to remove employee:', employeeId, error)
+            this.$toast?.error(`Failed to remove employee from team`)
+          }
+        }
+
         this.closeManageEmployeesModal()
         await this.loadAllTeamsData()
-        this.$toast?.success('Employee management updated')
+        this.$toast?.success('Employee management updated successfully')
       } catch (error) {
         console.error('Error managing employees:', error)
-        this.$toast?.error('Failed to update employees')
+        this.$toast?.error('Failed to update employee management')
       } finally {
         this.managingEmployees = false
       }

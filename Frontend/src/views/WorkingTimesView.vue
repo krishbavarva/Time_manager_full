@@ -401,10 +401,11 @@ const getWorkingMinutes = (start, end) => {
 }
 
 const formatDuration = (minutes) => {
-  if (minutes <= 0) return '0h 0m'
+  if (minutes <= 0) return '0:00:00'
   const hours = Math.floor(minutes / 60)
-  const mins = minutes % 60
-  return `${hours}h ${mins}m`
+  const mins = Math.floor(minutes % 60)
+  const secs = Math.floor((minutes * 60) % 60)
+  return `${hours.toString().padStart(1, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
 }
 
 const calculateDuration = (start, end) => {
@@ -417,7 +418,7 @@ const calculateDuration = (start, end) => {
   let totalMinutes = (endHour * 60 + endMinute) - (startHour * 60 + startMinute)
   if (totalMinutes < 0) totalMinutes += 24 * 60
   
-  if (workingMinutes <= 0) return '0h 0m (outside working hours)'
+  if (workingMinutes <= 0) return '0:00:00 (outside working hours)'
   
   if (workingMinutes < totalMinutes) {
     return `${formatDuration(workingMinutes)} (of ${formatDuration(totalMinutes)})`

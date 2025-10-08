@@ -137,6 +137,11 @@ const handleSignin = async ({ email, password }) => {
       
       localStorage.setItem('currentUser', JSON.stringify(userData))
       loginUser.value = userData
+      
+      // Refresh the global user state immediately
+      if (window.refreshUserState) {
+        window.refreshUserState()
+      }
     }
     
     loginSuccess.value = true

@@ -143,13 +143,13 @@
             <tbody>
               <tr v-for="r in hoursRows" :key="r.date" class="hover:bg-gray-50">
                 <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ r.date }}</td>
-                <td class="text-right font-mono py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtMMSS(r.minutes * 60) }}</td>
+                <td class="text-right font-mono py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtHMS(r.minutes * 60) }}</td>
                 <td class="text-right py-3 px-4 border-b border-gray-200 text-gray-800">{{ (r.minutes / 60).toFixed(1) }}h</td>
               </tr>
               <tr class="font-medium bg-gray-50">
                 <td class="py-3 px-4 border-b border-gray-200">Total</td>
                 <td class="text-right font-mono py-3 px-4 border-b border-gray-200">
-                  {{ fmtMMSS(hoursRows.reduce((sum, r) => sum + (r.minutes * 60), 0)) }}
+                  {{ fmtHMS(hoursRows.reduce((sum, r) => sum + (r.minutes * 60), 0)) }}
                 </td>
                 <td class="text-right py-3 px-4 border-b border-gray-200">
                   {{ (hoursRows.reduce((sum, r) => sum + r.minutes, 0) / 60).toFixed(1) }}h
@@ -182,7 +182,7 @@
                 <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtIso(b.start) }}</td>
                 <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtIso(b.end) }}</td>
                 <td class="py-3 px-4 border-b border-gray-200 text-gray-800">{{ (b.seconds ? (b.seconds/60).toFixed(2) : b.minutes) }}</td>
-                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtMMSS(b.seconds ?? (b.minutes * 60)) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtHMS(b.seconds ?? (b.minutes * 60)) }}</td>
               </tr>
             </tbody>
           </table>
@@ -226,22 +226,22 @@
                 <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtIso(s.start) }}</td>
                 <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtIso(s.end) }}</td>
                 <td class="py-3 px-4 border-b border-gray-200 text-gray-800">{{ (s.seconds ? (s.seconds/60).toFixed(2) : s.minutes) }}</td>
-                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtMMSS(s.seconds ?? (s.minutes * 60)) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtHMS(s.seconds ?? (s.minutes * 60)) }}</td>
               </tr>
               <tr v-if="filteredSessions.length > 0" class="font-medium bg-gray-50">
                 <td colspan="2" class="text-right pr-4 py-3 px-4 border-b border-gray-200">Total Work Time:</td>
                 <td class="py-3 px-4 border-b border-gray-200">{{ totalWorkMinutes.toFixed(2) }}</td>
-                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200">{{ fmtMMSS(totalWorkMinutes * 60) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200">{{ fmtHMS(totalWorkMinutes * 60) }}</td>
               </tr>
               <tr v-if="filteredBreaks.length > 0" class="font-medium bg-gray-50">
                 <td colspan="2" class="text-right pr-4 py-3 px-4 border-b border-gray-200">Total Break Time:</td>
                 <td class="py-3 px-4 border-b border-gray-200">{{ totalBreakMinutes.toFixed(2) }}</td>
-                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200">{{ fmtMMSS(totalBreakMinutes * 60) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200">{{ fmtHMS(totalBreakMinutes * 60) }}</td>
               </tr>
               <tr v-if="filteredSessions.length > 0 || filteredBreaks.length > 0" class="font-bold bg-gray-100">
                 <td colspan="2" class="text-right pr-4 py-3 px-4 border-b border-gray-200">Total Time (Work + Break):</td>
                 <td class="py-3 px-4 border-b border-gray-200">{{ (totalWorkMinutes + totalBreakMinutes).toFixed(2) }}</td>
-                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200">{{ fmtMMSS((totalWorkMinutes + totalBreakMinutes) * 60) }}</td>
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200">{{ fmtHMS((totalWorkMinutes + totalBreakMinutes) * 60) }}</td>
               </tr>
             </tbody>
           </table>
