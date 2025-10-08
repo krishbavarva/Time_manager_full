@@ -36,8 +36,13 @@ const handle = async (promise) => {
   return body
 }
 
-const jsonHeaders = () => ({ 'Content-Type': 'application/json', Accept: 'application/json' })
-const getHeaders = () => ({ Accept: 'application/json' })
+const jsonHeaders = () => ({ 'Content-Type': 'application/json', Accept: 'application/json', ...getAuthHeaders() })
+const getHeaders = () => ({ Accept: 'application/json', ...getAuthHeaders() })
+
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('authToken')
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
 
 export const http = {
   get: (path, { query, headers } = {}) => handle(fetch(buildUrl(path, query), { headers: { ...getHeaders(), ...(headers || {}) } })),

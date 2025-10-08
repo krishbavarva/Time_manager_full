@@ -35,26 +35,44 @@
         </span>
         
         <!-- Admin/Manager Actions -->
-        <button 
-          v-if="isAdmin" 
+        <button
+          v-if="isAdmin"
           @click="$router.push('/admin/users')"
           class="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
         >
           <span>👥</span>
           <span>Manage Users</span>
         </button>
-        
-        <button 
-          v-if="isManager" 
-          @click="$router.push('/team')"
+
+        <button
+          v-if="isAdmin"
+          @click="$router.push('/admin/teams')"
+          class="flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+        >
+          <span>🏢</span>
+          <span>Manage Teams</span>
+        </button>
+
+        <button
+          v-if="isAdmin"
+          @click="$router.push('/admin/dashboard')"
+          class="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+        >
+          <span>📊</span>
+          <span>Admin Dashboard</span>
+        </button>
+
+        <button
+          v-if="isManager"
+          @click="$router.push('/teams')"
           class="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
         >
           <span>👥</span>
-          <span>My Team</span>
+          <span>My Teams</span>
         </button>
-        
-        <button 
-          @click="openProfile" 
+
+        <button
+          @click="openProfile"
           class="px-3 py-1.5 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
         >
           Edit Profile
@@ -342,12 +360,19 @@ const updateCharts = (breaks) => {
   }
 }
 
-onMounted(() => {
-  try { user.value = JSON.parse(localStorage.getItem('currentUser') || 'null') } catch { user.value = null }
-  if (user.value) profile.value = { username: user.value.username || '', first_name: user.value.first_name || '', last_name: user.value.last_name || '' }
-  loadToday()
-  loadCharts()
-})
+  onMounted(() => {
+    try { user.value = JSON.parse(localStorage.getItem('currentUser') || 'null') } catch { user.value = null }
+    if (user.value) {
+      // Redirect admin users to admin dashboard
+      if (user.value.role === 'admin') {
+        router.push('/admin/dashboard')
+        return
+      }
+      profile.value = { username: user.value.username || '', first_name: user.value.first_name || '', last_name: user.value.last_name || '' }
+      loadToday()
+      loadCharts()
+    }
+  })
 
 const openProfile = () => {
   if (!user.value) return

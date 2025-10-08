@@ -1,23 +1,30 @@
 <template>
   <div id="app">
-    <header class="topbar">
+    <!-- Navbar - Only show for authenticated users -->
+    <header v-if="showNavbar" class="topbar">
       <nav class="nav">
         <div class="nav-links">
-          <RouterLink to="/dashboard">Dashboard</RouterLink>
-          <RouterLink to="/working-times">Working Times</RouterLink>
+          <RouterLink v-if="isAdmin" to="/admin/dashboard">Admin Dashboard</RouterLink>
+          <RouterLink v-else to="/dashboard">Dashboard</RouterLink>
+          <RouterLink v-if="!isAdmin" to="/working-times">Working Times</RouterLink>
           <RouterLink to="/clockins">Clockins</RouterLink>
+          <RouterLink v-if="isAdmin" to="/admin/users">Users</RouterLink>
+          <RouterLink v-if="isAdmin" to="/admin/teams">Admin Teams</RouterLink>
+          <RouterLink v-if="isAdmin" to="/teams">Teams</RouterLink>
+          <RouterLink v-if="isAdmin" to="/admin/teams" class="create-team-btn">Create Team</RouterLink>
         </div>
         <div class="nav-actions">
           <a href="#" class="logout-btn" @click.prevent="handleLogout">Logout</a>
         </div>
       </nav>
     </header>
+
     <main class="content">
       <RouterView />
     </main>
 
-    <!-- Floating Chatbot Button -->
-    <div class="chatbot-float" v-if="$route.path !== '/chat'">
+    <!-- Floating Chatbot Button - Only show for authenticated users -->
+    <div class="chatbot-float" v-if="showNavbar && $route.path !== '/chat'">
       <button @click="$router.push('/chat')" class="chatbot-button" title="Open Chat Assistant">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" class="chatbot-icon">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
@@ -29,10 +36,81 @@
 </template>
 
 <script setup>
-import { RouterLink, RouterView } from 'vue-router';
+import { RouterLink, RouterView, useRoute } from 'vue-router';
+import { computed, onMounted, ref, watch } from 'vue';
+
+const currentUser = ref(null);
+const route = useRoute();
+
+// Function to load current user from localStorage
+const loadCurrentUser = () => {
+  try {
+    const userData = localStorage.getItem('currentUser');
+    if (userData && userData !== 'null' && userData !== '{}') {
+      const user = JSON.parse(userData);
+      // Validate that it's a proper user object with required fields
+      if (user && typeof user === 'object' && user.id && user.email) {
+        currentUser.value = user;
+      } else {
+        currentUser.value = null;
+        localStorage.removeItem('currentUser');
+      }
+    } else {
+      currentUser.value = null;
+    }
+  } catch {
+    currentUser.value = null;
+    localStorage.removeItem('currentUser');
+  }
+};
+
+onMounted(() => {
+  loadCurrentUser();
+
+  // Listen for storage events to update currentUser when localStorage changes
+  window.addEventListener('storage', (e) => {
+    if (e.key === 'currentUser') {
+      loadCurrentUser();
+    }
+  });
+});
+
+// Watch for changes in currentUser to handle logout scenarios
+watch(currentUser, (newUser) => {
+  if (newUser === null) {
+    // User has been logged out, redirect to login if not already there
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login';
+    }
+  }
+});
+
+const isAuthenticated = computed(() => {
+  return currentUser.value !== null &&
+         currentUser.value !== undefined &&
+         typeof currentUser.value === 'object' &&
+         currentUser.value.id &&
+         currentUser.value.email;
+});
+
+const showNavbar = computed(() => {
+  if (!isAuthenticated.value) return false;
+  const hiddenRouteNames = new Set(['login', 'signup']);
+  return !hiddenRouteNames.has(route.name);
+});
+
+const isAdmin = computed(() => {
+  return currentUser.value?.role === 'admin';
+});
+
+const isManager = computed(() => {
+  return ['admin', 'manager'].includes(currentUser.value?.role);
+});
 
 const handleLogout = () => {
   localStorage.removeItem('currentUser');
+  localStorage.removeItem('authToken');
+  // Force a reload to ensure the navbar disappears and user is redirected to login
   window.location.href = '/login';
 };
 </script>
@@ -140,12 +218,22 @@ body {
   margin-left: 1rem;
 }
 
-.nav .logout-btn:hover {
-  background-color: #bb2d3b;
+.create-team-btn {
+  background-color: #10b981 !important;
+  color: white !important;
+  padding: 0.4rem 1rem !important;
+  border-radius: 4px;
+  font-weight: 500;
+  transition: background-color 0.2s;
 }
 
-.nav .logout-btn.router-link-active {
-  background-color: #bb2d3b;
+.create-team-btn:hover {
+  background-color: #059669 !important;
+  color: white !important;
+}
+
+.create-team-btn.router-link-active {
+  background-color: #059669 !important;
 }
 
 .nav-links {
@@ -156,10 +244,10 @@ body {
   flex: 1;
 }
 
-.nav-actions {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+.content {
+  flex: 1;
+  background-color: #f9fafb;
+  min-height: 100vh;
 }
 
 .chatbot-float {
@@ -244,6 +332,7 @@ body {
   
   .content {
     padding: 1rem 0.75rem;
+    min-height: calc(100vh - 2rem);
   }
   
   .chatbot-float {

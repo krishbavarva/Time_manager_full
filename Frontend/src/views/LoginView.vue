@@ -64,14 +64,14 @@
       </div>
       
       <!-- Sign up link -->
-      <div class="mt-6 text-center">
+      <!-- <div class="mt-6 text-center">
         <p class="text-sm text-gray-600">
           Don't have an account? 
           <a href="#" @click.prevent="onSwitchPage('signup')" class="font-medium text-indigo-600 hover:text-indigo-500">
             Sign up for free
           </a>
         </p>
-      </div>
+      </div> -->
     </div>
   </div>
 </template>

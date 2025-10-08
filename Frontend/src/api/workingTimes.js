@@ -20,3 +20,8 @@ export const workingTimesApi = {
   // DELETE /api/workingtime/:id
   remove: (id) => http.delete(`/api/workingtime/${id}`)
 }
+
+// Alias for compatibility with AdminDashboard component
+export const workingTimeApi = {
+  getByUser: (userId) => workingTimesApi.list(userId)
+}

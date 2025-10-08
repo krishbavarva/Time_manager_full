@@ -9,6 +9,12 @@ const WorkingTimesView = () => import('../views/WorkingTimesView.vue')
 const ClockinsView = () => import('../views/ClockinsView.vue')
 const ChatView = () => import('../views/ChatView.vue')
 const AdminUsersView = () => import('../views/AdminUsersView.vue')
+const TeamsView = () => import('../views/TeamsView.vue')
+const TeamDetailView = () => import('../views/TeamDetailView.vue')
+const TeamDataView = () => import('../views/TeamDataView.vue')
+const AdminTeamsView = () => import('../views/AdminTeamsView.vue')
+const AdminDashboard = () => import('../views/AdminDashboard.vue')
+const NotFound = () => import('../views/NotFound.vue')
 
 const routes = [
   { path: '/', redirect: '/dashboard' },
@@ -18,8 +24,15 @@ const routes = [
   { path: '/clockins', name: 'clockins', component: ClockinsView },
   { path: '/chat', name: 'chat', component: ChatView },
   { path: '/admin/users', name: 'admin-users', component: AdminUsersView },
+  { path: '/admin/teams', name: 'admin-teams', component: AdminTeamsView },
+  { path: '/admin/dashboard', name: 'admin-dashboard', component: AdminDashboard },
+  { path: '/teams', name: 'teams', component: TeamsView },
+  { path: '/teams/:id', name: 'team-detail', component: TeamDetailView },
+  { path: '/teams/:id/data', name: 'team-data', component: TeamDataView },
   { path: '/users', redirect: '/admin/users' },
-  { path: '/signup', redirect: '/admin/users' }
+  { path: '/signup', redirect: '/admin/users' },
+  // Catch-all route for 404 pages
+  { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFound }
 ]
 
 const router = createRouter({
@@ -27,6 +40,55 @@ const router = createRouter({
   routes
 })
 
+// Helper function to validate user authentication
+const isUserAuthenticated = () => {
+  try {
+    const userData = localStorage.getItem('currentUser');
+    if (userData && userData !== 'null' && userData !== '{}') {
+      const user = JSON.parse(userData);
+      // Validate that it's a proper user object with required fields
+      return user && typeof user === 'object' && user.id && user.email;
+    }
+    return false;
+  } catch {
+    return false;
+  }
+};
+
+// Navigation guard for authentication
+router.beforeEach((to, from, next) => {
+  // Define routes that don't require authentication
+  const publicRoutes = ['/login', '/signup']
+
+  // Check if the route requires authentication
+  if (!publicRoutes.includes(to.path)) {
+    if (!isUserAuthenticated()) {
+      // Redirect to login if user is not authenticated
+      next('/login')
+      return
+    }
+
+    // Check if route requires admin access
+    if (to.path.startsWith('/admin/')) {
+      try {
+        const user = JSON.parse(localStorage.getItem('currentUser') || '{}')
+        const userRole = user.role || 'employee'
+
+        if (userRole !== 'admin') {
+          // Redirect non-admin users to dashboard
+          next('/dashboard')
+          return
+        }
+      } catch {
+        // If we can't parse the user data, redirect to login
+        next('/login')
+        return
+      }
+    }
+  }
+
+  next()
+})
 
 export default router
 
