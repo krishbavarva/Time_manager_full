@@ -107,10 +107,10 @@ const handleSignin = async ({ email, password }) => {
   loginError.value = ''
   loginSuccess.value = false
   
-  if (!email || !password) {
-    loginError.value = 'Please enter both email and password'
-    return
-  }
+  // if (!email || !password) {
+  //   loginError.value = 'Please enter both email and password'
+  //   return
+  // }
   
   try {
     // Verify password with the backend and get user data
@@ -167,7 +167,7 @@ const verifyPassword = async (email, password) => {
 
     if (!response.ok) {
       const error = await response.json()
-      throw new Error(error.error || 'Authentication failed')
+      throw new Error(error.error || 'Please enter valid password')
     }
 
     const data = await response.json()
