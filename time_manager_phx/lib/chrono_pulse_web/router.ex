@@ -36,6 +36,7 @@ defmodule ChronoPulseWeb.Router do
     get "/managers/:manager_id/teams", TeamController, :by_manager
     resources "/overtime_requests", OvertimeRequestController, except: [:new, :edit]
     resources "/attendance", AttendanceController, except: [:new, :edit]
+    resources "/leave_requests", LeaveRequestController, except: [:new, :edit]
   end
 
   # Enable Swoosh mailbox preview in development
