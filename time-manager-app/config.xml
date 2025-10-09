@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="com.example.timemanager" version="1.0.0"
+    xmlns="http://www.w3.org/ns/widgets"
+    xmlns:cdv="http://cordova.apache.org/ns/1.0"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <name>TimeManager</name>
+    <description>Sample Apache Cordova App</description>
+    <author email="asawirshafiq1@gmail.com" href="https://cordova.apache.org">
+        Asawir Shafiq Khokhar
+    </author>
+
+    <!-- Entry point -->
+    <content src="index.html" />
+
+    <!-- Allow specific backend IP -->
+    <allow-navigation href="http://172.20.10.2:4000/*" />
+    <access origin="http://172.20.10.2:4000/*" />
+    
+    <!-- Allow all other connections (optional fallback) -->
+    <access origin="*" />
+
+    <!-- Allow navigation and intents -->
+    <allow-navigation href="http://*" />
+    <allow-navigation href="https://*" />
+    <allow-intent href="http://*" />
+    <allow-intent href="https://*" />
+
+    <!-- Enable HTTP (non-HTTPS) requests on Android -->
+    <platform name="android">
+        <preference name="scheme" value="http" />
+        <edit-config file="app/src/main/AndroidManifest.xml"
+            mode="merge"
+            target="/manifest/application">
+            <application android:usesCleartextTraffic="true" />
+        </edit-config>
+    </platform>
+
+</widget>
