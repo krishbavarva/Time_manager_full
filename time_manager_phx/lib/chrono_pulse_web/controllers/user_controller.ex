@@ -42,7 +42,8 @@ defmodule ChronoPulseWeb.UserController do
       email: user.email,
       first_name: user.first_name,
       last_name: user.last_name,
-      role: user.role || "employee"
+      role: user.role || "employee",
+      flexible_time_enabled: user.flexible_time_enabled || false
     }
   end
 

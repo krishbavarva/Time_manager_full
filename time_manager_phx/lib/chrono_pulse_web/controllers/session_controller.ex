@@ -15,12 +15,7 @@ defmodule ChronoPulseWeb.SessionController do
         |> put_status(:ok)
         |> render(:token, token: token)
 
-      {:error, :not_found} ->
-        conn
-        |> put_status(:unauthorized)
-        |> json(%{error: "Invalid email or password"})
-
-      {:error, :invalid_credentials} ->
+      {:error, _reason} ->
         conn
         |> put_status(:unauthorized)
         |> json(%{error: "Invalid email or password"})

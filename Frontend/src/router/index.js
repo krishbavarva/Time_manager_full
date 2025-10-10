@@ -4,7 +4,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 const LoginView = () => import('../views/LoginView.vue')
 const SignupView = () => import('../views/SignupView.vue')
 const DashboardView = () => import('../views/DashboardView.vue')
-const UsersView = () => import('../views/UsersView.vue')
 const WorkingTimesView = () => import('../views/WorkingTimesView.vue')
 const ClockinsView = () => import('../views/ClockinsView.vue')
 const ChatView = () => import('../views/ChatView.vue')
@@ -14,6 +13,14 @@ const TeamDetailView = () => import('../views/TeamDetailView.vue')
 const TeamDataView = () => import('../views/TeamDataView.vue')
 const AdminTeamsView = () => import('../views/AdminTeamsView.vue')
 const AdminDashboard = () => import('../views/AdminDashboard.vue')
+const ManagerTeamView = () => import('../views/ManagerTeamView.vue')
+const LeaveManagementView = () => import('../views/LeaveManagementView.vue')
+const OvertimeManagementView = () => import('../views/OvertimeManagementView.vue')
+const WeeklyTimesheetView = () => import('../views/WeeklyTimesheetView.vue')
+const UserScheduleView = () => import('../views/UserScheduleView.vue')
+const TimesheetApprovalView = () => import('../views/TimesheetApprovalView.vue')
+const AttendanceCalendarView = () => import('../views/AttendanceCalendarView.vue')
+const WorkSessionView = () => import('../views/WorkSessionView.vue')
 const NotFound = () => import('../views/NotFound.vue')
 
 const routes = [
@@ -27,8 +34,16 @@ const routes = [
   { path: '/admin/teams', name: 'admin-teams', component: AdminTeamsView },
   { path: '/admin/dashboard', name: 'admin-dashboard', component: AdminDashboard },
   { path: '/teams', name: 'teams', component: TeamsView },
+  { path: '/manager/team', name: 'manager-team', component: ManagerTeamView },
   { path: '/teams/:id', name: 'team-detail', component: TeamDetailView },
   { path: '/teams/:id/data', name: 'team-data', component: TeamDataView },
+  { path: '/leave-management', name: 'leave-management', component: LeaveManagementView },
+  { path: '/overtime-management', name: 'overtime-management', component: OvertimeManagementView },
+  { path: '/weekly-timesheet', name: 'weekly-timesheet', component: WeeklyTimesheetView },
+  { path: '/user-schedule', name: 'user-schedule', component: UserScheduleView },
+  { path: '/timesheet-approvals', name: 'timesheet-approvals', component: TimesheetApprovalView },
+  { path: '/attendance-calendar', name: 'attendance-calendar', component: AttendanceCalendarView },
+  { path: '/work-session', name: 'work-session', component: WorkSessionView },
   { path: '/users', redirect: '/admin/users' },
   { path: '/signup', redirect: '/admin/users' },
   // Catch-all route for 404 pages

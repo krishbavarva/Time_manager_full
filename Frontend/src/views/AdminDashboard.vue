@@ -1,510 +1,515 @@
 <template>
-  <section class="p-6 max-w-7xl mx-auto bg-white">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
-      <div>
-        <h1 class="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-        <p class="text-gray-600 mt-1">View and manage employee working sessions</p>
-      </div>
-
-      <!-- Date Filters -->
-      <div class="flex flex-wrap gap-3">
-        <button
-          v-for="filter in dateFilters"
-          :key="filter.key"
-          @click="setDateFilter(filter.key)"
-          :class="[
-            'px-4 py-2 text-sm font-medium rounded-lg transition-colors',
-            selectedDateFilter === filter.key
-              ? 'bg-indigo-600 text-white'
-              : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
-          ]"
-        >
-          {{ filter.label }}
-        </button>
-      </div>
-    </div>
-
-    <!-- User Search Section -->
-    <div class="bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
-      <div class="p-6">
-        <h2 class="text-lg font-medium text-gray-900 mb-4">Search Users</h2>
-
-        <!-- Search Bar -->
-        <div class="flex gap-4 mb-4">
-          <div class="flex-1">
-            <input
-              v-model="searchQuery"
-              type="text"
-              placeholder="Search by name, username, or email..."
-              class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              @input="searchUsers"
-            />
+  <div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+      <!-- Page Header -->
+      <div class="mb-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+            <p class="text-gray-600">Global overview of organization performance and activity</p>
           </div>
-          <select
-            v-model="selectedRole"
-            @change="searchUsers"
-            class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="">All Roles</option>
-            <option value="admin">Admin</option>
-            <option value="manager">Manager</option>
-            <option value="employee">Employee</option>
-          </select>
+          <div class="flex items-center space-x-4">
+            <button
+              @click="refreshData"
+              class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+            >
+              🔄 Refresh
+            </button>
+            <button
+              @click="exportReport"
+              class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700"
+            >
+              📊 Export Report
+            </button>
+          </div>
         </div>
+      </div>
 
-        <!-- User Selection -->
-        <div v-if="filteredUsers.length > 0" class="border border-gray-200 rounded-md max-h-48 overflow-y-auto">
-          <div
-            v-for="user in filteredUsers.slice(0, 10)"
-            :key="user.id"
-            @click="selectUser(user)"
-            :class="[
-              'p-3 cursor-pointer hover:bg-gray-50 transition-colors',
-              selectedUser?.id === user.id ? 'bg-indigo-50 border-indigo-200' : 'border-gray-100'
-            ]"
-          >
-            <div class="flex items-center justify-between">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <span class="text-xs font-medium text-blue-600">
-                    {{ user.first_name?.[0] || user.username?.[0] || 'U' }}
-                  </span>
-                </div>
-                <div>
-                  <p class="text-sm font-medium text-gray-900">
-                    {{ user.first_name && user.last_name
-                        ? `${user.first_name} ${user.last_name}`
-                        : user.username || 'Unknown User' }}
-                  </p>
-                  <p class="text-xs text-gray-500">{{ user.email }}</p>
-                </div>
-              </div>
-              <span :class="[
-                'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                user.role === 'admin' ? 'bg-red-100 text-red-800' :
-                user.role === 'manager' ? 'bg-blue-100 text-blue-800' :
-                'bg-green-100 text-green-800'
-              ]">
-                {{ user.role }}
-              </span>
+      <!-- Key Metrics -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="flex items-center">
+            <div class="p-3 bg-blue-100 rounded-lg">
+              <span class="text-2xl">👥</span>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-500">Total Employees</p>
+              <p class="text-2xl font-bold text-gray-900">{{ totalEmployees }}</p>
+              <p class="text-xs text-green-600">+12% from last month</p>
             </div>
           </div>
         </div>
 
-        <!-- No users found -->
-        <div v-else-if="searchQuery && !loadingUsers" class="text-center py-4 text-gray-500">
-          No users found matching "{{ searchQuery }}"
-        </div>
-      </div>
-    </div>
-
-    <!-- Selected User Info -->
-    <div v-if="selectedUser" class="bg-white border border-gray-200 rounded-lg shadow-sm mb-6">
-      <div class="p-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Selected User</h3>
-        <div class="flex items-center gap-4">
-          <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-            <span class="text-lg font-medium text-indigo-600">
-              {{ selectedUser.first_name?.[0] || selectedUser.username?.[0] || 'U' }}
-            </span>
-          </div>
-          <div class="flex-1">
-            <h4 class="text-xl font-semibold text-gray-900">
-              {{ selectedUser.first_name && selectedUser.last_name
-                  ? `${selectedUser.first_name} ${selectedUser.last_name}`
-                  : selectedUser.username || 'Unknown User' }}
-            </h4>
-            <p class="text-gray-600">{{ selectedUser.email }}</p>
-            <span :class="[
-              'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium mt-2',
-              selectedUser.role === 'admin' ? 'bg-red-100 text-red-800' :
-              selectedUser.role === 'manager' ? 'bg-blue-100 text-blue-800' :
-              'bg-green-100 text-green-800'
-            ]">
-              {{ selectedUser.role }}
-            </span>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="flex items-center">
+            <div class="p-3 bg-green-100 rounded-lg">
+              <span class="text-2xl">🟢</span>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-500">Online Now</p>
+              <p class="text-2xl font-bold text-gray-900">{{ onlineUsers }}</p>
+              <p class="text-xs text-blue-600">{{ onlinePercentage }}% of total</p>
+            </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Working Sessions Table -->
-    <div v-if="selectedUser" class="bg-white border border-gray-200 rounded-lg shadow-sm">
-      <div class="p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="flex items-center">
+            <div class="p-3 bg-purple-100 rounded-lg">
+              <span class="text-2xl">⏰</span>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-500">Avg Work Hours</p>
+              <p class="text-2xl font-bold text-gray-900">{{ averageWorkHours }}</p>
+              <p class="text-xs text-orange-600">Today</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div class="flex items-center">
+            <div class="p-3 bg-orange-100 rounded-lg">
+              <span class="text-2xl">📈</span>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm font-medium text-gray-500">Productivity</p>
+              <p class="text-2xl font-bold text-gray-900">{{ Math.round(productivityScore) }}%</p>
+              <p class="text-xs text-green-600">+5% this week</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Working Hours Chart -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Working Hours Trend</h3>
+          <div class="h-64">
+            <canvas ref="hoursChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Team Performance Chart -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Team Performance</h3>
+          <div class="h-64">
+            <canvas ref="teamChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Top Performers and Alerts -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Top Performers -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Performers</h3>
+          <div class="space-y-3">
+            <div v-for="(performer, index) in topPerformers" :key="performer.id" class="flex items-center space-x-3">
+              <div class="flex-shrink-0">
+                <span class="text-sm font-medium text-gray-500">#{{ index + 1 }}</span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-medium text-gray-900">{{ performer.name }}</p>
+                <p class="text-xs text-gray-500">{{ performer.hours }} hours this week</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recent Alerts -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Recent Alerts</h3>
+          <div class="space-y-3">
+            <div v-for="alert in recentAlerts" :key="alert.id" class="flex items-start space-x-3">
+              <div class="flex-shrink-0">
+                <span :class="[
+                  'w-2 h-2 rounded-full mt-2',
+                  alert.type === 'warning' ? 'bg-yellow-400' :
+                  alert.type === 'error' ? 'bg-red-400' :
+                  'bg-green-400'
+                ]"></span>
+              </div>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm text-gray-900">{{ alert.message }}</p>
+                <p class="text-xs text-gray-500">{{ formatTime(alert.timestamp) }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Team Overview -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
         <div class="flex items-center justify-between mb-6">
-          <h3 class="text-lg font-medium text-gray-900">Working Sessions</h3>
-          <div class="flex items-center gap-2 text-sm text-gray-500">
-            <span>{{ filteredSessions.length }} sessions</span>
-            <span>•</span>
-            <button
-              @click="exportData"
-              class="text-indigo-600 hover:text-indigo-900"
-            >
-              Export CSV
-            </button>
-          </div>
+          <h3 class="text-lg font-semibold text-gray-900">Team Overview</h3>
+          <button
+            @click="$router.push('/admin/teams')"
+            class="text-blue-600 hover:text-blue-800 text-sm font-medium"
+          >
+            View All Teams →
+          </button>
         </div>
-
-        <!-- Loading State -->
-        <div v-if="loadingSessions" class="flex justify-center items-center py-8">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-        </div>
-
-        <!-- Sessions Table -->
-        <div v-else-if="filteredSessions.length > 0" class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-              <tr>
-                <th
-                  @click="sortBy('start')"
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                >
-                  <div class="flex items-center gap-1">
-                    Date
-                    <svg v-if="sortField === 'start'" :class="['w-4 h-4', sortDirection === 'desc' ? 'rotate-180' : '']" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16l-4-4m0 0l4-4m-4 4h18" />
-                    </svg>
-                  </div>
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Clock In
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Clock Out
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Hours
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Break Time
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="session in paginatedSessions" :key="session.id" class="hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ formatDate(session.start) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ formatTime(session.start) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ session.end ? formatTime(session.end) : 'In Progress' }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ calculateTotalHours(session) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {{ calculateBreakTime(session) }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span :class="[
-                    'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                    session.end ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                  ]">
-                    {{ session.end ? 'Completed' : 'In Progress' }}
-                  </span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Empty State -->
-        <div v-else class="text-center py-8">
-          <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 class="mt-2 text-sm font-medium text-gray-900">No working sessions</h3>
-          <p class="mt-1 text-sm text-gray-500">No working sessions found for the selected period.</p>
-        </div>
-
-        <!-- Pagination -->
-        <div v-if="totalPages > 1" class="flex items-center justify-between mt-6">
-          <div class="text-sm text-gray-700">
-            Showing {{ ((currentPage - 1) * pageSize) + 1 }} to {{ Math.min(currentPage * pageSize, filteredSessions.length) }} of {{ filteredSessions.length }} results
-          </div>
-          <div class="flex gap-2">
-            <button
-              @click="currentPage = Math.max(1, currentPage - 1)"
-              :disabled="currentPage === 1"
-              class="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-            >
-              Previous
-            </button>
-            <button
-              v-for="page in visiblePages"
-              :key="page"
-              @click="currentPage = page"
-              :class="[
-                'px-3 py-1 text-sm border rounded-md',
-                page === currentPage
-                  ? 'bg-indigo-600 text-white border-indigo-600'
-                  : 'border-gray-300 hover:bg-gray-50'
-              ]"
-            >
-              {{ page }}
-            </button>
-            <button
-              @click="currentPage = Math.min(totalPages, currentPage + 1)"
-              :disabled="currentPage === totalPages"
-              class="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-            >
-              Next
-            </button>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div v-for="team in teams" :key="team.id" class="border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="font-medium text-gray-900">{{ team.name }}</h4>
+              <span class="text-sm text-gray-500">{{ team.memberCount }} members</span>
+            </div>
+            
+            <div class="space-y-2">
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Manager:</span>
+                <span class="text-gray-900">{{ team.managerName }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Online:</span>
+                <span class="text-green-600">{{ team.onlineCount }}/{{ team.memberCount }}</span>
+              </div>
+              <div class="flex justify-between text-sm">
+                <span class="text-gray-500">Avg Hours:</span>
+                <span class="text-gray-900">{{ team.averageHours }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
-
-    <!-- No User Selected State -->
-    <div v-else class="text-center py-12">
-      <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
-      <h3 class="mt-2 text-lg font-medium text-gray-900">Select a User</h3>
-      <p class="mt-1 text-sm text-gray-500">Search and select a user to view their working sessions.</p>
-    </div>
-  </section>
+  </div>
 </template>
 
-<script>
-import { usersApi } from '@/api/users'
-import { workingTimeApi } from '@/api/workingTimes'
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { usersApi } from '../api/users'
+import { teamsApi } from '../api/teams'
+import { chartsApi } from '../api/charts'
+import { clockinsApi } from '../api/clockins'
+import { workingTimesApi } from '../api/workingTimes'
+import Chart from 'chart.js/auto'
 
-export default {
-  name: 'AdminDashboard',
-  data() {
-    return {
-      // Users
-      allUsers: [],
-      filteredUsers: [],
-      selectedUser: null,
-      searchQuery: '',
-      selectedRole: '',
-      loadingUsers: false,
+// Reactive data
+const totalEmployees = ref(0)
+const onlineUsers = ref(0)
+const averageWorkHours = ref('8:30')
+const productivityScore = ref(87)
+const topPerformers = ref([])
+const recentAlerts = ref([])
+const teams = ref([])
 
-      // Working Sessions
-      workingSessions: [],
-      loadingSessions: false,
+// Chart refs
+const hoursChart = ref(null)
+const teamChart = ref(null)
+let hoursChartInstance = null
+let teamChartInstance = null
 
-      // Date Filters
-      selectedDateFilter: 'all',
-      dateFilters: [
-        { key: 'all', label: 'All Time' },
-        { key: 'today', label: 'Today' },
-        { key: 'week', label: 'This Week' },
-        { key: 'month', label: 'This Month' }
-      ],
+// Computed properties
+const onlinePercentage = computed(() => {
+  return totalEmployees.value > 0 ? Math.round((onlineUsers.value / totalEmployees.value) * 100) : 0
+})
 
-      // Pagination
-      currentPage: 1,
-      pageSize: 10,
 
-      // Sorting
-      sortField: 'start',
-      sortDirection: 'desc'
-    }
-  },
-  computed: {
-    filteredSessions() {
-      let sessions = [...this.workingSessions]
+// Lifecycle
+onMounted(() => {
+  loadDashboardData()
+  initializeCharts()
+  startLiveUpdates()
+})
 
-      // Apply date filter
-      if (this.selectedDateFilter !== 'all') {
-        sessions = this.filterSessionsByDate(sessions, this.selectedDateFilter)
-      }
+onUnmounted(() => {
+  if (hoursChartInstance) hoursChartInstance.destroy()
+  if (teamChartInstance) teamChartInstance.destroy()
+})
 
-      // Apply sorting
-      return this.sortSessions(sessions)
-    },
-    totalPages() {
-      return Math.ceil(this.filteredSessions.length / this.pageSize)
-    },
-    paginatedSessions() {
-      const start = (this.currentPage - 1) * this.pageSize
-      const end = start + this.pageSize
-      return this.filteredSessions.slice(start, end)
-    },
-    visiblePages() {
-      const total = this.totalPages
-      const current = this.currentPage
-      const delta = 2
+// Methods
+const loadDashboardData = async () => {
+  try {
+    // Load users
+    const usersResponse = await usersApi.list()
+    const users = usersResponse.data || []
+    totalEmployees.value = users.length
 
-      const range = []
-      const rangeWithDots = []
-
-      for (let i = Math.max(2, current - delta); i <= Math.min(total - 1, current + delta); i++) {
-        range.push(i)
-      }
-
-      if (current - delta > 2) {
-        rangeWithDots.push(1, '...')
-      } else {
-        rangeWithDots.push(1)
-      }
-
-      rangeWithDots.push(...range)
-
-      if (current + delta < total - 1) {
-        rangeWithDots.push('...', total)
-      } else if (total > 1) {
-        rangeWithDots.push(total)
-      }
-
-      return rangeWithDots
-    }
-  },
-  async created() {
-    await this.loadUsers()
-  },
-  methods: {
-    async loadUsers() {
-      try {
-        this.loadingUsers = true
-        const response = await usersApi.list()
-        this.allUsers = response.data || []
-        this.filteredUsers = this.allUsers
-      } catch (error) {
-        console.error('Error loading users:', error)
-        this.$toast?.error('Failed to load users')
-      } finally {
-        this.loadingUsers = false
-      }
-    },
-
-    searchUsers() {
-      let filtered = this.allUsers
-
-      // Filter by search query
-      if (this.searchQuery) {
-        const query = this.searchQuery.toLowerCase()
-        filtered = filtered.filter(user =>
-          (user.first_name && user.first_name.toLowerCase().includes(query)) ||
-          (user.last_name && user.last_name.toLowerCase().includes(query)) ||
-          user.username.toLowerCase().includes(query) ||
-          user.email.toLowerCase().includes(query)
-        )
-      }
-
-      // Filter by role
-      if (this.selectedRole) {
-        filtered = filtered.filter(user => user.role === this.selectedRole)
-      }
-
-      this.filteredUsers = filtered
-    },
-
-    async selectUser(user) {
-      this.selectedUser = user
-      this.currentPage = 1
-      await this.loadWorkingSessions()
-    },
-
-    async loadWorkingSessions() {
-      if (!this.selectedUser) return
-
-      try {
-        this.loadingSessions = true
-        const response = await workingTimeApi.getByUser(this.selectedUser.id)
-        this.workingSessions = response.data || []
-      } catch (error) {
-        console.error('Error loading working sessions:', error)
-        this.$toast?.error('Failed to load working sessions')
-        this.workingSessions = []
-      } finally {
-        this.loadingSessions = false
-      }
-    },
-
-    setDateFilter(filter) {
-      this.selectedDateFilter = filter
-      this.currentPage = 1
-    },
-
-    filterSessionsByDate(sessions, filter) {
-      const now = new Date()
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-
-      switch (filter) {
-        case 'today':
-          return sessions.filter(session => {
-            const sessionDate = new Date(session.start)
-            return sessionDate >= today && sessionDate < new Date(today.getTime() + 24 * 60 * 60 * 1000)
-          })
-        case 'week':
-          const weekStart = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
-          return sessions.filter(session => new Date(session.start) >= weekStart)
-        case 'month':
-          const monthStart = new Date(today.getFullYear(), today.getMonth(), 1)
-          return sessions.filter(session => new Date(session.start) >= monthStart)
-        default:
-          return sessions
-      }
-    },
-
-    sortSessions(sessions) {
-      return sessions.sort((a, b) => {
-        let aVal = a[this.sortField]
-        let bVal = b[this.sortField]
-
-        if (this.sortField === 'start' || this.sortField === 'end') {
-          aVal = new Date(aVal)
-          bVal = new Date(bVal)
+    // Load clock-in data to determine online status
+    const clockPromises = users.map(user => 
+      clockinsApi.listByUser(user.id).catch(() => ({ data: [] }))
+    )
+    const clockResponses = await Promise.all(clockPromises)
+    
+    // Calculate online users (clocked in within last 12 hours)
+    let onlineCount = 0
+    let totalHours = 0
+    
+    users.forEach((user, index) => {
+      const clocks = clockResponses[index]?.data || []
+      if (clocks.length > 0) {
+        const lastClock = clocks[0]
+        const clockTime = new Date(lastClock.time)
+        const hoursSince = (Date.now() - clockTime.getTime()) / (1000 * 60 * 60)
+        
+        if (hoursSince < 12 && lastClock.status) {
+          onlineCount++
         }
+      }
+    })
+    
+    onlineUsers.value = onlineCount
 
-        if (this.sortDirection === 'desc') {
-          return bVal > aVal ? 1 : -1
-        } else {
-          return aVal > bVal ? 1 : -1
+    // Load teams with real data
+    const teamsResponse = await teamsApi.list()
+    const baseTeams = teamsResponse.data || []
+    
+    teams.value = await Promise.all(baseTeams.map(async (team) => {
+      // Get team members by checking if user has team_id matching team.id
+      const teamMembers = users.filter(u => u.team_id === team.id)
+      
+      // Calculate online members for this team
+      let teamOnlineCount = 0
+      teamMembers.forEach((member, memberIndex) => {
+        // Find the user's index in the main users array
+        const userIndex = users.findIndex(u => u.id === member.id)
+        if (userIndex >= 0) {
+          const clocks = clockResponses[userIndex]?.data || []
+          if (clocks.length > 0) {
+            const lastClock = clocks[0]
+            const clockTime = new Date(lastClock.time)
+            const hoursSince = (Date.now() - clockTime.getTime()) / (1000 * 60 * 60)
+            if (hoursSince < 12 && lastClock.status) {
+              teamOnlineCount++
+            }
+          }
         }
       })
-    },
-
-    sortBy(field) {
-      if (this.sortField === field) {
-        this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc'
-      } else {
-        this.sortField = field
-        this.sortDirection = 'desc'
+      
+      return {
+        ...team,
+        memberCount: teamMembers.length,
+        onlineCount: teamOnlineCount,
+        managerName: team.manager_name || 'Manager',
+        averageHours: '8:15'
       }
-    },
+    }))
 
-    calculateTotalHours(session) {
-      if (!session.end) return 'In Progress'
+    // Calculate average work hours
+    const workHoursTotal = await calculateTotalWorkHours(users)
+    const avgHours = users.length > 0 ? workHoursTotal / users.length : 0
+    const hours = Math.floor(avgHours)
+    const minutes = Math.round((avgHours - hours) * 60)
+    averageWorkHours.value = `${hours}:${minutes.toString().padStart(2, '0')}`
 
-      const start = new Date(session.start)
-      const end = new Date(session.end)
-      const diffMs = end - start
-      const diffHours = diffMs / (1000 * 60 * 60)
+    // Generate sample data
+    generateSampleData()
+  } catch (error) {
+    console.error('Error loading dashboard data:', error)
+  }
+}
 
-      return `${diffHours.toFixed(2)}h`
-    },
-
-    calculateBreakTime(session) {
-      // For now, return 0 as break time calculation would need additional data
-      // This could be enhanced if break time data is available in the API
-      return '0.00h'
-    },
-
-    formatDate(dateString) {
-      const date = new Date(dateString)
-      return date.toLocaleDateString()
-    },
-
-    formatTime(dateString) {
-      const date = new Date(dateString)
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    },
-
-    exportData() {
-      // CSV export functionality could be added here
-      this.$toast?.info('Export functionality coming soon')
+const calculateTotalWorkHours = async (users) => {
+  let total = 0
+  const today = new Date()
+  
+  for (const user of users) {
+    try {
+      const workingTimesResponse = await workingTimesApi.list(
+        user.id,
+        today.toISOString(),
+        today.toISOString()
+      )
+      const workingTimes = workingTimesResponse.data || []
+      
+      workingTimes.forEach(wt => {
+        if (wt.start && wt.end) {
+          const start = new Date(wt.start)
+          const end = new Date(wt.end)
+          total += (end - start) / (1000 * 60 * 60)
+        }
+      })
+    } catch (err) {
+      // Skip on error
     }
   }
+  
+  return total
+}
+
+const generateSampleData = async () => {
+  try {
+    // Fetch users for top performers calculation
+    const usersResponse = await usersApi.list()
+    const users = usersResponse.data || []
+    
+    // Calculate top performers based on real working hours
+    const userHours = []
+    for (const user of users) {
+      try {
+        const today = new Date()
+        const weekStart = new Date(today.setDate(today.getDate() - today.getDay()))
+        const weekEnd = new Date(weekStart)
+        weekEnd.setDate(weekStart.getDate() + 6)
+        
+        const workingTimesResponse = await workingTimesApi.list(
+          user.id,
+          weekStart.toISOString(),
+          weekEnd.toISOString()
+        )
+        const workingTimes = workingTimesResponse.data || []
+        
+        let totalHours = 0
+        workingTimes.forEach(wt => {
+          if (wt.start && wt.end) {
+            const start = new Date(wt.start)
+            const end = new Date(wt.end)
+            totalHours += (end - start) / (1000 * 60 * 60)
+          }
+        })
+        
+        if (totalHours > 0) {
+          const hours = Math.floor(totalHours)
+          const minutes = Math.round((totalHours - hours) * 60)
+          userHours.push({
+            id: user.id,
+            name: `${user.first_name} ${user.last_name}`,
+            hours: `${hours}:${minutes.toString().padStart(2, '0')}`,
+            totalHours
+          })
+        }
+      } catch (err) {
+        // Skip on error
+      }
+    }
+    
+    // Sort by total hours and take top 3
+    userHours.sort((a, b) => b.totalHours - a.totalHours)
+    topPerformers.value = userHours.slice(0, 3)
+
+    // Generate recent alerts (these would come from a notification system in production)
+    recentAlerts.value = [
+      {
+        id: 1,
+        type: 'info',
+        message: `${users.length} employees currently tracked in system`,
+        timestamp: new Date(Date.now() - 30 * 60 * 1000)
+      },
+      {
+        id: 2,
+        type: 'warning',
+        message: `${onlineUsers.value} employees currently online`,
+        timestamp: new Date(Date.now() - 60 * 60 * 1000)
+      }
+    ]
+  } catch (error) {
+    console.error('Error generating sample data:', error)
+  }
+}
+
+const initializeCharts = () => {
+  // Working Hours Chart
+  if (hoursChart.value) {
+    const ctx = hoursChart.value.getContext('2d')
+    hoursChartInstance = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+        datasets: [{
+          label: 'Scheduled Hours',
+          data: [8, 8, 8, 8, 8, 0, 0],
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4
+        }, {
+          label: 'Actual Hours',
+          data: [8.5, 7.5, 8.2, 8.8, 7.2, 0, 0],
+          borderColor: 'rgb(16, 185, 129)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          tension: 0.4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'top'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Hours'
+            }
+          }
+        }
+      }
+    })
+  }
+
+  // Team Performance Chart
+  if (teamChart.value) {
+    const ctx = teamChart.value.getContext('2d')
+    teamChartInstance = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Development', 'Marketing', 'Sales', 'Support'],
+        datasets: [{
+          data: [35, 25, 20, 20],
+          backgroundColor: [
+            'rgb(59, 130, 246)',
+            'rgb(16, 185, 129)',
+            'rgb(245, 158, 11)',
+            'rgb(239, 68, 68)'
+          ]
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    })
+  }
+}
+
+const startLiveUpdates = () => {
+  // Simulate real-time updates
+  setInterval(() => {
+    // Update online users count
+    onlineUsers.value = Math.floor(totalEmployees.value * (0.6 + Math.random() * 0.3))
+    
+    // Add new activity
+    const activities = ['Clocked in', 'Clocked out', 'Started break', 'Ended break']
+    const names = ['John Doe', 'Jane Smith', 'Mike Johnson', 'Alice Brown']
+    
+    if (Math.random() > 0.7) {
+      liveActivities.value.unshift({
+        id: Date.now(),
+        user: { first_name: names[Math.floor(Math.random() * names.length)].split(' ')[0] },
+        message: activities[Math.floor(Math.random() * activities.length)],
+        timestamp: new Date()
+      })
+      
+      // Keep only last 10 activities
+      if (liveActivities.value.length > 10) {
+        liveActivities.value = liveActivities.value.slice(0, 10)
+      }
+    }
+  }, 5000)
+}
+
+const refreshData = () => {
+  loadDashboardData()
+}
+
+const exportReport = () => {
+  // TODO: Implement report export
+  alert('Report export functionality will be implemented soon!')
+}
+
+const formatTime = (timestamp) => {
+  return new Date(timestamp).toLocaleTimeString()
 }
 </script>

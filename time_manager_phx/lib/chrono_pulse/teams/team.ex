@@ -23,7 +23,7 @@ defmodule ChronoPulse.Teams.Team do
   def changeset(team, attrs) do
     team
     |> cast(attrs, [:description, :manager_id])
-    |> validate_required([:description, :manager_id])
+    |> validate_required([:description])
     |> assoc_constraint(:manager)
     |> put_employees_assoc(attrs)
   end

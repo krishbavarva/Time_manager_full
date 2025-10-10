@@ -16,6 +16,9 @@ defmodule ChronoPulse.Accounts.User do
     field :password, :string, virtual: true
     field :hashed_password, :string
     field :role, :string, default: "employee"
+    
+    # flexible time permission
+    field :flexible_time_enabled, :boolean, default: false
 
     timestamps(type: :utc_datetime)
   end
@@ -26,7 +29,7 @@ defmodule ChronoPulse.Accounts.User do
   Otherwise, databases may truncate the email without warnings, which
   could lead to unpredictable or insecure behaviour.
   """
-  def registration_changeset(user, attrs, opts \\ []) do
+  def registration_changeset(user, attrs, _opts \\ []) do
     user
     |> cast(attrs, [:username, :email, :first_name, :last_name, :password, :role])
     |> validate_required([:username, :email, :password, :role])
@@ -42,9 +45,29 @@ defmodule ChronoPulse.Accounts.User do
       nil -> changeset
       password ->
         change(changeset, hashed_password: Bcrypt.hash_pwd_salt(password))
+    end
   end
-end
 
+  @doc """
+  A user changeset for updating user information.
+  """
+  def update_changeset(user, attrs, _opts \\ []) do
+    user
+    |> cast(attrs, [:username, :email, :first_name, :last_name, :role, :flexible_time_enabled, :password])
+    |> validate_required([:username, :email, :role])
+    |> validate_inclusion(:role, ["employee", "manager", "admin"])
+    |> unique_constraint(:email)
+    |> unique_constraint(:username)
+    |> validate_length(:password, min: 6)
+    |> put_password_hash()
+  end
 
-
+  @doc """
+  A simple changeset for form preview.
+  """
+  def changeset(user, attrs) do
+    user
+    |> cast(attrs, [:username, :email, :first_name, :last_name, :role, :flexible_time_enabled])
+    |> validate_required([:username, :email])
+  end
 end

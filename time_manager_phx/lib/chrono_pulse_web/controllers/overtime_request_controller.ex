@@ -10,13 +10,13 @@ defmodule ChronoPulseWeb.OvertimeRequestController do
   # GET /api/overtime_requests
   def index(conn, _params) do
     requests = Overtime.list_requests()
-    render(conn, :index, requests: requests)
+    json(conn, OvertimeRequestJSON.index(%{overtime_requests: requests}))
   end
 
   # GET /api/overtime_requests/:id
   def show(conn, %{"id" => id}) do
     request = Overtime.get_request!(id)
-    render(conn, :show, request: request)
+    json(conn, OvertimeRequestJSON.show(%{overtime_request: request}))
   end
 
   # POST /api/overtime_requests
@@ -24,7 +24,7 @@ defmodule ChronoPulseWeb.OvertimeRequestController do
     with {:ok, %OvertimeRequest{} = request} <- Overtime.create_request(request_params) do
       conn
       |> put_status(:created)
-      |> render(:show, request: request)
+      |> json(OvertimeRequestJSON.show(%{overtime_request: request}))
     end
   end
 
@@ -33,7 +33,7 @@ defmodule ChronoPulseWeb.OvertimeRequestController do
     request = Overtime.get_request!(id)
 
     with {:ok, %OvertimeRequest{} = updated_request} <- Overtime.update_request(request, request_params) do
-      render(conn, :show, request: updated_request)
+      json(conn, OvertimeRequestJSON.show(%{overtime_request: updated_request}))
     end
   end
 

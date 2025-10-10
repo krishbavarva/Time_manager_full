@@ -1,20 +1,24 @@
 <template>
   <div id="app">
     <!-- Navbar - Only show for authenticated users -->
-    <header v-if="showNavbar" class="topbar">
-      <nav class="nav">
-        <div class="nav-links">
-          <RouterLink v-if="isAdmin" to="/admin/dashboard">Admin Dashboard</RouterLink>
-          <RouterLink v-else to="/dashboard">Dashboard</RouterLink>
-          <RouterLink v-if="!isAdmin" to="/working-times">Working Times</RouterLink>
-          <RouterLink to="/clockins">Clockins</RouterLink>
-          <RouterLink v-if="isAdmin" to="/admin/users">Users</RouterLink>
-          <RouterLink v-if="isAdmin" to="/admin/teams">Admin Teams</RouterLink>
-          <RouterLink v-if="isManager" to="/teams">Teams</RouterLink>
-          <!-- <RouterLink v-if="isAdmin" to="/admin/teams" class="create-team-btn">Create Team</RouterLink> -->
-        </div>
-        <div class="nav-actions">
-          <a href="#" class="logout-btn" @click.prevent="handleLogout">Logout</a>
+    <header v-if="showNavbar" class="bg-white border-b border-gray-200">
+      <nav class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <div class="flex items-center space-x-8">
+            <RouterLink v-if="isAdmin" to="/admin/dashboard" class="text-gray-700 hover:text-blue-600 font-medium">Admin Dashboard</RouterLink>
+            <RouterLink to="/dashboard" class="text-gray-700 hover:text-blue-600 font-medium">Dashboard</RouterLink>
+            <RouterLink v-if="!isAdmin" to="/work-session" class="text-gray-700 hover:text-blue-600 font-medium">Work Session</RouterLink>
+            <RouterLink v-if="!isAdmin" to="/working-times" class="text-gray-700 hover:text-blue-600 font-medium">Working Times</RouterLink>
+            <RouterLink v-if="!isAdmin" to="/clockins" class="text-gray-700 hover:text-blue-600 font-medium">Clockins</RouterLink>
+            <RouterLink v-if="!isAdmin" to="/attendance-calendar" class="text-gray-700 hover:text-blue-600 font-medium">Attendance</RouterLink>
+            <RouterLink v-if="isAdmin" to="/admin/users" class="text-gray-700 hover:text-blue-600 font-medium">Users</RouterLink>
+            <RouterLink v-if="isAdmin" to="/admin/teams" class="text-gray-700 hover:text-blue-600 font-medium">Admin Teams</RouterLink>
+            <RouterLink v-if="isManager && !isAdmin" to="/teams" class="text-gray-700 hover:text-blue-600 font-medium">Teams</RouterLink>
+            <RouterLink v-if="isManager && !isAdmin" to="/manager/team" class="text-gray-700 hover:text-blue-600 font-medium">Team Members</RouterLink>
+          </div>
+          <div class="flex items-center space-x-4">
+            <a href="#" class="text-gray-700 hover:text-red-600 font-medium" @click.prevent="handleLogout">Logout</a>
+          </div>
         </div>
       </nav>
     </header>
@@ -22,6 +26,9 @@
     <main class="content">
       <RouterView />
     </main>
+
+    <!-- Notification System -->
+    <NotificationSystem />
 
     <!-- Floating Chatbot Button - Only show for authenticated users -->
     <div class="chatbot-float" v-if="showNavbar && $route.path !== '/chat'">
@@ -38,9 +45,9 @@
 </template>
 
 <script setup>
-<<<<<<< HEAD
 import { RouterLink, RouterView, useRoute } from 'vue-router';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import NotificationSystem from './components/NotificationSystem.vue';
 
 const currentUser = ref(null);
 const route = useRoute();
@@ -116,96 +123,6 @@ const handleLogout = () => {
   // Force a reload to ensure the navbar disappears and user is redirected to login
   window.location.href = '/login';
 };
-=======
-import { ref, onMounted } from 'vue'
-import { useRouter, RouterLink, RouterView } from 'vue-router'
-import { usersApi } from './api/users'
-
-const router = useRouter()
-
-const loading = ref(false)
-const error = ref('')
-const loginError = ref('')
-const loginSuccess = ref(false)
-const loginUser = ref(null)
-const users = ref([])
-
-onMounted(async () => {
-  loading.value = true
-  try {
-    const res = await usersApi.list()
-    users.value = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : [])
-  } catch (_) {
-    error.value = 'Failed to load users'
-  } finally {
-    loading.value = false
-  }
-})
-
-const handleLogout = () => {
-  localStorage.removeItem('currentUser')
-  localStorage.removeItem('authToken')
-  router.push('/login')
-}
-
-// Verify password against backend
-const verifyPassword = async (email, password) => {
-  try {
-    const data = await usersApi.login(email, password)
-    if (data.data && data.data.token) {
-      localStorage.setItem('authToken', data.data.token)
-      return true
-    }
-    return false
-  } catch (error) {
-    console.error('Authentication error:', error)
-    throw error
-  }
-}
-
-const handleSignin = async ({ email, password }) => {
-  loginError.value = ''
-  loginSuccess.value = false
-
-  if (!email || !password) {
-    loginError.value = 'Please enter both email and password'
-    return
-  }
-
-  try {
-    const isAuthenticated = await verifyPassword(email, password)
-
-    if (!isAuthenticated) {
-      loginError.value = 'Invalid email or password'
-      return
-    }
-
-    const user = users.value.find(u => u.email === email)
-    if (user) {
-      const userData = {
-        id: user.id,
-        email: user.email,
-        username: user.username,
-        first_name: user.first_name,
-        last_name: user.last_name,
-        role: user.role
-      }
-      localStorage.setItem('currentUser', JSON.stringify(userData))
-      loginUser.value = userData
-    }
-
-    loginSuccess.value = true
-
-    setTimeout(() => {
-      router.push('/dashboard')
-    }, 1500)
-
-  } catch (err) {
-    console.error('Login error:', err)
-    loginError.value = err.message || 'An error occurred during login. Please try again.'
-  }
-}
->>>>>>> origin/main
 </script>
 
 <style>
@@ -226,22 +143,6 @@ html, body, #app { height: 100vh; width: 100%; overflow-x: hidden; }
 .nav .logout-btn:hover { background-color: #bb2d3b; }
 .content { flex: 1; padding: 1rem; }
 
-<<<<<<< HEAD
-#app {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-
-.topbar {
-  background-color: #ffffff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.logout-btn:hover {
-  background-color: #dc2626;
-}
-
 /* Global Styles */
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -249,6 +150,7 @@ body {
   color: #111827;
   background-color: #f9fafb;
 }
+
 #app {
   display: flex;
   flex-direction: column;
@@ -266,15 +168,12 @@ body {
 }
 
 .nav {
-  /* max-width: 1200px; */
   margin: 0 auto;
   padding: 0.75rem 1rem;
   display: flex;
   align-items: center;
-  /* justify-content: space-between; */
   width: 100%;
   gap: 1.5rem;
-  width: 100%;
 }
 
 .nav a {
@@ -317,22 +216,8 @@ body {
   margin-left: 1rem;
 }
 
-.create-team-btn {
-  background-color: #10b981 !important;
-  color: white !important;
-  padding: 0.4rem 1rem !important;
-  border-radius: 4px;
-  font-weight: 500;
-  transition: background-color 0.2s;
-}
-
-.create-team-btn:hover {
-  background-color: #059669 !important;
-  color: white !important;
-}
-
-.create-team-btn.router-link-active {
-  background-color: #059669 !important;
+.nav .logout-btn:hover {
+  background-color: #dc2626;
 }
 
 .nav-links {
@@ -343,12 +228,19 @@ body {
   flex: 1;
 }
 
+.nav-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
 .content {
   flex: 1;
   background-color: #f9fafb;
   min-height: 100vh;
 }
 
+/* Chatbot Styles */
 .chatbot-float {
   position: fixed;
   bottom: 2rem;
@@ -449,12 +341,4 @@ body {
     height: 20px;
   }
 }
-=======
-.chatbot-float { position: fixed; bottom: 2rem; right: 2rem; z-index: 1000; }
-.chatbot-button { position: relative; width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(79,70,229,0.4); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; }
-.chatbot-button:hover { transform: scale(1.1) translateY(-2px); box-shadow: 0 8px 20px rgba(79,70,229,0.6); }
-.chatbot-icon { width: 24px; height: 24px; stroke-width: 2; }
-.chatbot-pulse { position: absolute; top: -2px; left: -2px; right: -2px; bottom: -2px; border-radius: 50%; border: 2px solid rgba(79,70,229,0.3); animation: chatbotPulse 2s infinite; }
-@keyframes chatbotPulse { 0% { transform: scale(1); opacity:1; } 50% { transform: scale(1.2); opacity:0.5; } 100% { transform: scale(1); opacity:1; } }
->>>>>>> origin/main
 </style>

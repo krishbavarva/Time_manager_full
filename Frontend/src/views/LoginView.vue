@@ -155,22 +155,9 @@ const verifyPassword = async (email, password) => {
   try {
     const response = await http.post('/api/sessions', { email, password })
 
-<<<<<<< HEAD
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Please enter valid password')
-    }
-
-    const data = await response.json()
-    
     // Store the token in localStorage
-    if (data.data && data.data.token) {
-      localStorage.setItem('authToken', data.data.token)
-=======
-    // Depending on your backend response structure:
     if (response?.data?.token) {
       localStorage.setItem('authToken', response.data.token)
->>>>>>> origin/main
       return true
     }
 

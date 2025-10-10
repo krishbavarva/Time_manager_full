@@ -30,6 +30,28 @@ defmodule ChronoPulseWeb.Router do
     get "/charts/user/:user_id/hours", ChartsController, :user_hours
     get "/charts/user/:user_id/sessions", ChartsController, :user_sessions
     get "/charts/user/:user_id/breaks", ChartsController, :user_breaks
+    
+    # Time Management Features
+    resources "/attendance", AttendanceController, except: [:new, :edit]
+    resources "/leave_requests", LeaveRequestController, except: [:new, :edit]
+    resources "/overtime_requests", OvertimeRequestController, except: [:new, :edit]
+    
+    # User schedules
+    resources "/user_schedules", UserScheduleController, except: [:new, :edit]
+    get "/user_schedules/user/:user_id", UserScheduleController, :by_user
+    
+    # Break calculation
+    get "/breaks/user/:user_id/date/:date", BreakController, :calculate
+    
+    # Team clock-in
+    post "/teams/:team_id/clock_in", TeamClockController, :clock_in_team
+    
+    # Timesheet approval
+    resources "/timesheet_approvals", TimesheetApprovalController, except: [:new, :edit]
+    post "/timesheet_approvals/:id/approve", TimesheetApprovalController, :approve
+    post "/timesheet_approvals/:id/reject", TimesheetApprovalController, :reject
+    
+    # Other routes
     post "/complaints", UserComplaintController, :create
     post "/chat", ChatController, :create
     resources "/teams", TeamController, except: [:new, :edit]

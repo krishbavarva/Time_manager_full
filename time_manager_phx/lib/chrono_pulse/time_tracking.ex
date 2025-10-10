@@ -7,7 +7,8 @@ defmodule ChronoPulse.TimeTracking do
   alias ChronoPulse.Repo
 
   alias ChronoPulse.TimeTracking.WorkingTime
-alias ChronoPulse.TimeTracking.Clock
+  alias ChronoPulse.TimeTracking.Clock
+  alias ChronoPulse.TimeTracking.UserSchedule
 
   @doc """
   Returns the list of workingtimes.
@@ -161,5 +162,59 @@ alias ChronoPulse.TimeTracking.Clock
     Repo.delete_all(from c in Clock, where: c.user_id == ^user_id)
     Repo.delete_all(from w in WorkingTime, where: w.user_id == ^user_id)
     :ok
+  end
+
+  # User Schedule functions
+
+  @doc """
+  Creates a user schedule.
+  """
+  def create_user_schedule(attrs \\ %{}) do
+    %UserSchedule{}
+    |> UserSchedule.changeset(attrs)
+    |> Repo.insert()
+  end
+
+  @doc """
+  Gets a single user schedule.
+  """
+  def get_user_schedule!(id), do: Repo.get!(UserSchedule, id)
+
+  @doc """
+  Lists all user schedules for a user.
+  """
+  def list_user_schedules(user_id) do
+    Repo.all(from s in UserSchedule, where: s.user_id == ^user_id and s.is_active == true)
+  end
+
+  @doc """
+  Gets the schedule for a specific day of the week for a user.
+  """
+  def get_schedule_for_day(user_id, day_of_week) do
+    Repo.one(from s in UserSchedule, 
+      where: s.user_id == ^user_id and s.day_of_week == ^day_of_week and s.is_active == true)
+  end
+
+  @doc """
+  Updates a user schedule.
+  """
+  def update_user_schedule(%UserSchedule{} = user_schedule, attrs) do
+    user_schedule
+    |> UserSchedule.changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Deletes a user schedule.
+  """
+  def delete_user_schedule(%UserSchedule{} = user_schedule) do
+    Repo.delete(user_schedule)
+  end
+
+  @doc """
+  Returns an `%Ecto.Changeset{}` for tracking user schedule changes.
+  """
+  def change_user_schedule(%UserSchedule{} = user_schedule, attrs \\ %{}) do
+    UserSchedule.changeset(user_schedule, attrs)
   end
 end

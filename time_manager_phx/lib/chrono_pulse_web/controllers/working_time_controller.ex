@@ -6,28 +6,49 @@ defmodule ChronoPulseWeb.WorkingTimeController do
 
   action_fallback ChronoPulseWeb.FallbackController
 
+  defp parse_date(date_str) when is_binary(date_str) do
+    # Remove milliseconds if present and ensure Z suffix
+    clean_date = date_str
+    |> String.replace(~r/\.\d{3}Z$/, "Z")
+    |> then(fn d -> if String.ends_with?(d, "Z"), do: d, else: d <> "Z" end)
+    
+    case DateTime.from_iso8601(clean_date) do
+      {:ok, dt, _} -> {:ok, dt}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   # GET /api/workingtime/:userID?start=XXX&end=YYY
-  def index(conn, %{"user_id" => user_id} = params) do
+  def index(conn, params) do
+    user_id = Map.get(params, "user_id")
     start_str = Map.get(params, "start")
     end_str = Map.get(params, "end")
+    
     base = TimeTracking.list_workingtimes()
     |> Enum.filter(&(&1.user_id == user_id))
     |> Enum.sort_by(& &1.start)
 
-    list =
-      case {start_str, end_str} do
-        {nil, nil} -> base
-        {s, nil} ->
-          {:ok, sdt, _} = DateTime.from_iso8601(String.replace(s, " ", "T") <> "Z")
-          Enum.filter(base, &DateTime.compare(&1.start, sdt) != :lt)
-        {nil, e} ->
-          {:ok, edt, _} = DateTime.from_iso8601(String.replace(e, " ", "T") <> "Z")
-          Enum.filter(base, &DateTime.compare(&1.end, edt) != :gt)
-        {s, e} ->
-          {:ok, sdt, _} = DateTime.from_iso8601(String.replace(s, " ", "T") <> "Z")
-          {:ok, edt, _} = DateTime.from_iso8601(String.replace(e, " ", "T") <> "Z")
-          Enum.filter(base, fn w -> DateTime.compare(w.start, sdt) != :lt and DateTime.compare(w.end, edt) != :gt end)
-      end
+    # Apply date filtering if parameters are provided
+    list = case {start_str, end_str} do
+      {nil, nil} -> base
+      {s, nil} ->
+        case parse_date(s) do
+          {:ok, sdt} -> Enum.filter(base, &DateTime.compare(&1.start, sdt) != :lt)
+          {:error, _} -> base
+        end
+      {nil, e} ->
+        case parse_date(e) do
+          {:ok, edt} -> Enum.filter(base, &DateTime.compare(&1.end, edt) != :gt)
+          {:error, _} -> base
+        end
+      {s, e} ->
+        case {parse_date(s), parse_date(e)} do
+          {{:ok, sdt}, {:ok, edt}} ->
+            Enum.filter(base, fn w -> DateTime.compare(w.start, sdt) != :lt and DateTime.compare(w.end, edt) != :gt end)
+          _ -> base
+        end
+    end
+    
     render(conn, :index, workingtimes: list)
   end
 

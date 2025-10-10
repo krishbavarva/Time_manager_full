@@ -19,16 +19,24 @@ defmodule ChronoPulseWeb.TeamJSON do
     %{
       id: team.id,
       description: team.description,
-      manager: %{
-        id: team.manager.id,
-        username: team.manager.username,
-        email: team.manager.email
-      },
+      manager: if team.manager do
+        %{
+          id: team.manager.id,
+          username: team.manager.username,
+          email: team.manager.email,
+          first_name: team.manager.first_name,
+          last_name: team.manager.last_name
+        }
+      else
+        nil
+      end,
       employees: Enum.map(team.employees, fn emp ->
         %{
           id: emp.id,
           username: emp.username,
-          email: emp.email
+          email: emp.email,
+          first_name: emp.first_name,
+          last_name: emp.last_name
         }
       end)
     }

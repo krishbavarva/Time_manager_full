@@ -35,6 +35,20 @@
         >
           Refresh
         </button>
+        <button 
+          type="button" 
+          @click="switchToToday" 
+          class="px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer bg-green-600 text-white border border-green-600 hover:bg-green-700 hover:border-green-700"
+        >
+          Today
+        </button>
+        <button 
+          type="button" 
+          @click="switchToDataDate" 
+          class="px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 hover:border-blue-700"
+        >
+          Data Date
+        </button>
         
         <div v-if="runningSince" class="ml-auto flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg">
           <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
@@ -127,7 +141,7 @@
       <div v-if="chartsLoading" class="p-4 text-center text-gray-500">
         Loading charts...
       </div>
-      <div v-else-if="hoursRows.length === 0" class="p-4 text-center text-gray-500">
+      <div v-else-if="filteredSessions.length === 0" class="p-4 text-center text-gray-500">
         No working time data available for the selected period.
       </div>
       <template v-else>
@@ -141,18 +155,18 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="r in hoursRows" :key="r.date" class="hover:bg-gray-50">
-                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ r.date }}</td>
-                <td class="text-right font-mono py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtHMS(r.minutes * 60) }}</td>
-                <td class="text-right py-3 px-4 border-b border-gray-200 text-gray-800">{{ (r.minutes / 60).toFixed(1) }}h</td>
+              <tr v-for="session in filteredSessions" :key="session.start" class="hover:bg-gray-50">
+                <td class="whitespace-nowrap py-3 px-4 border-b border-gray-200 text-gray-800">{{ new Date(session.start).toISOString().split('T')[0] }}</td>
+                <td class="text-right font-mono py-3 px-4 border-b border-gray-200 text-gray-800">{{ fmtHMS(session.seconds || 0) }}</td>
+                <td class="text-right py-3 px-4 border-b border-gray-200 text-gray-800">{{ ((session.seconds || 0) / 3600).toFixed(1) }}h</td>
               </tr>
               <tr class="font-medium bg-gray-50">
                 <td class="py-3 px-4 border-b border-gray-200">Total</td>
                 <td class="text-right font-mono py-3 px-4 border-b border-gray-200">
-                  {{ fmtHMS(hoursRows.reduce((sum, r) => sum + (r.minutes * 60), 0)) }}
+                  {{ fmtHMS(filteredSessions.reduce((sum, s) => sum + (s.seconds || 0), 0)) }}
                 </td>
                 <td class="text-right py-3 px-4 border-b border-gray-200">
-                  {{ (hoursRows.reduce((sum, r) => sum + r.minutes, 0) / 60).toFixed(1) }}h
+                  {{ (filteredSessions.reduce((sum, s) => sum + (s.seconds || 0), 0) / 3600).toFixed(1) }}h
                 </td>
               </tr>
             </tbody>
@@ -321,6 +335,7 @@ const sessions = ref([])
 const isClockedIn = ref(false)
 const currentClockInTime = ref(null)
 const filteredSessions = ref([])
+const filteredBreaks = ref([])
 const sessionsDate = ref('')
 const hoursCanvas = ref(null)
 const breaksCanvas = ref(null)
@@ -420,19 +435,34 @@ const filterClockinsByDate = () => {
     selectedDate.value = today; // Default to today if no date selected
   }
   
+  console.log('🔵 Filtering clock-ins for date:', selectedDate.value)
+  console.log('🔵 Available clock-ins:', list.value.length)
+  
   filteredClockins.value = list.value.filter(clockin => {
     if (!clockin.time) return false
-    const clockinDate = new Date(clockin.time).toISOString().split('T')[0]
-    return clockinDate === selectedDate.value
+    
+    // Convert the clock-in time to the user's local date
+    const clockinDate = new Date(clockin.time)
+    const localClockinDate = clockinDate.toISOString().split('T')[0]
+    
+    console.log('🔵 Clock-in time:', clockin.time, '→ Local date:', localClockinDate, 'vs Selected:', selectedDate.value)
+    
+    return localClockinDate === selectedDate.value
   })
+  
+  console.log('🔵 Filtered clock-ins count:', filteredClockins.value.length)
 }
 
 // Filter sessions and breaks by selected date
 const filterSessionsAndBreaks = () => {
   try {
     if (!sessionsDate.value) {
-      sessionsDate.value = getTodayDate(); // Default to today if no date selected
+      sessionsDate.value = '2025-10-08'; // Default to a date with data
     }
+    
+    console.log('🔵 Filtering sessions/breaks for date:', sessionsDate.value)
+    console.log('🔵 Available sessions:', sessions.value.length)
+    console.log('🔵 Available breaks:', breaks.value.length)
     
     // Convert dates to YYYY-MM-DD format for comparison
     const selectedDateStr = sessionsDate.value;
@@ -443,7 +473,11 @@ const filterSessionsAndBreaks = () => {
       try {
         const sessionDate = new Date(session.start);
         const sessionDateStr = sessionDate.toISOString().split('T')[0];
-        return sessionDateStr === selectedDateStr;
+        const matches = sessionDateStr === selectedDateStr;
+        if (matches) {
+          console.log('🔵 Matching session found:', session.start, '→', sessionDateStr)
+        }
+        return matches;
       } catch (e) {
         console.error('Error parsing session date:', session.start, e);
         return false;
@@ -456,16 +490,20 @@ const filterSessionsAndBreaks = () => {
       try {
         const breakDate = new Date(b.start);
         const breakDateStr = breakDate.toISOString().split('T')[0];
-        return breakDateStr === selectedDateStr;
+        const matches = breakDateStr === selectedDateStr;
+        if (matches) {
+          console.log('🔵 Matching break found:', b.start, '→', breakDateStr)
+        }
+        return matches;
       } catch (e) {
         console.error('Error parsing break date:', b.start, e);
         return false;
       }
     });
     
-    console.log(`Filtered data for ${selectedDateStr}:`);
-    console.log('Sessions:', filteredSessions.value);
-    console.log('Breaks:', filteredBreaks.value);
+    console.log('🔵 Filtered sessions count:', filteredSessions.value.length)
+    console.log('🔵 Filtered breaks count:', filteredBreaks.value.length)
+    
     
     // Update charts with filtered data
     updateCharts();
@@ -488,15 +526,7 @@ const formattedSessionsDate = computed(() => {
   });
 });
 
-// Compute filtered breaks for the selected date
-const filteredBreaks = computed(() => {
-  if (!sessionsDate.value) return [];
-  return breaks.value.filter(b => {
-    if (!b.start) return false;
-    const breakDate = new Date(b.start).toISOString().split('T')[0];
-    return breakDate === sessionsDate.value;
-  });
-});
+// filteredBreaks is now a ref, updated in updateFilteredData()
 
 // Compute total work time in minutes
 const totalWorkMinutes = computed(() => {
@@ -548,6 +578,15 @@ const load = async () => {
         currentClockInTime.value = null
         stopTimer()
       }
+      
+      // If no date is selected or selected date has no data, switch to the date with the most recent data
+      const mostRecentDate = new Date(lastRecord.time).toISOString().split('T')[0]
+      if (!selectedDate.value || selectedDate.value === today) {
+        console.log('🔵 Switching to most recent data date:', mostRecentDate)
+        selectedDate.value = mostRecentDate
+        chartsDate.value = mostRecentDate
+        sessionsDate.value = mostRecentDate
+      }
     } else {
       isClockedIn.value = false
       currentClockInTime.value = null
@@ -556,18 +595,6 @@ const load = async () => {
     
     // Filter clock-ins by the selected date
     filterClockinsByDate()
-    
-    // Check for active session (only for today)
-    if (selectedDate.value === today) {
-      const last = list.value[0]
-      if (last?.status) {
-        startTimer(last.time)
-      } else {
-        stopTimer()
-      }
-    } else {
-      stopTimer()
-    }
   } catch (_) {
     error.value = 'Failed to load clockins'
   } finally {
@@ -584,10 +611,11 @@ const loadCharts = async () => {
     return; 
   }
   
-  // If no date is selected, default to today
+  // If no date is selected, default to a date with data (2025-10-08)
   if (!chartsDate.value) {
-    chartsDate.value = today;
+    chartsDate.value = '2025-10-08'; // Use a date that has data
   }
+  
   
   // Also update sessions date to match charts date
   if (sessionsDate.value !== chartsDate.value) {
@@ -609,6 +637,7 @@ const loadCharts = async () => {
     hoursRows.value = Array.isArray(hoursRes?.data) ? hoursRes.data : [];
     breaks.value = Array.isArray(breaksRes?.data) ? breaksRes.data : [];
     sessions.value = Array.isArray(sessRes?.data) ? sessRes.data : [];
+    
     
     // Update filtered sessions and breaks
     filterSessionsAndBreaks();
@@ -749,9 +778,19 @@ const updateCharts = () => {
 }
 
 const toggle = async () => {
-  if (creating.value) return // Prevent multiple clicks
+  console.log('🔵 Toggle function called')
+  console.log('🔵 Creating state:', creating.value)
+  console.log('🔵 Current user ID:', currentUserId.value)
+  
+  if (creating.value) {
+    console.log('🔴 Already creating, returning early')
+    return // Prevent multiple clicks
+  }
+  
   creating.value = true
   error.value = ''
+  
+  console.log('🔵 Starting toggle process...')
   
   // Get location with fallback
   let location = { latitude: null, longitude: null }
@@ -772,19 +811,23 @@ const toggle = async () => {
   
   try {
     if (!currentUserId.value) {
+      console.log('🔴 No user ID found!')
       error.value = 'No user ID found. Please refresh the page.'
       return
     }
+    
+    console.log('🔵 User ID found:', currentUserId.value)
     
     // Toggle the clock state with actual location data
     const requestData = {
       latitude: location.latitude,
       longitude: location.longitude
     }
-    console.log('Sending location data to server:', requestData)
+    console.log('🔵 Sending location data to server:', requestData)
     
+    console.log('🔵 Making API call to clockinsApi.toggleForUser...')
     const response = await clockinsApi.toggleForUser(currentUserId.value, requestData)
-    console.log('Server response:', response)
+    console.log('🔵 Server response received:', response)
     
     // Log the response data for debugging
     if (response && response.data) {
@@ -838,10 +881,16 @@ const toggle = async () => {
     load().catch(err => console.error('Background refresh failed:', err))
     loadCharts().catch(err => console.error('Charts refresh failed:', err))
   } catch (err) {
-    console.error('Error toggling clock status:', err)
+    console.error('🔴 Error toggling clock status:', err)
+    console.error('🔴 Error details:', {
+      message: err.message,
+      status: err.status,
+      body: err.body
+    })
     // Revert the local state on error
     isClockedIn.value = !isClockedIn.value
   } finally {
+    console.log('🔵 Setting creating state to false')
     creating.value = false
   }
 }
@@ -850,20 +899,48 @@ const filterSessionsByDate = () => {
   filterSessionsAndBreaks();
 }
 
+const switchToToday = () => {
+  console.log('🔵 Switching to today:', today)
+  selectedDate.value = today
+  chartsDate.value = today
+  sessionsDate.value = today
+  handleDateChange()
+}
+
+const switchToDataDate = () => {
+  if (list.value.length > 0) {
+    const mostRecentDate = new Date(list.value[0].time).toISOString().split('T')[0]
+    console.log('🔵 Switching to data date:', mostRecentDate)
+    selectedDate.value = mostRecentDate
+    chartsDate.value = mostRecentDate
+    sessionsDate.value = mostRecentDate
+    handleDateChange()
+  }
+}
+
 onMounted(async () => {
+  console.log('🔵 ClockinsView mounted')
   try {
-    const u = JSON.parse(localStorage.getItem('currentUser') || 'null')
+    const userString = localStorage.getItem('currentUser')
+    console.log('🔵 Raw user data from localStorage:', userString)
+    
+    const u = JSON.parse(userString || 'null')
+    console.log('🔵 Parsed user data:', u)
+    
     if (u?.id) {
+      console.log('🔵 User ID found, setting currentUserId:', u.id)
       currentUserId.value = u.id
       await load()
+      await loadCharts() // Load sessions and breaks data
     } else {
+      console.log('🔴 No user ID found in localStorage')
       error.value = 'User not authenticated. Please log in again.';
       
       // Initial filtering
       filterSessionsAndBreaks();
     }
   } catch (e) {
-    console.error('Failed to load user data:', e)
+    console.error('🔴 Failed to load user data:', e)
     error.value = 'Failed to load user data. Please refresh the page.'
   }
 })
