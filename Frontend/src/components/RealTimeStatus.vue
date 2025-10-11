@@ -9,20 +9,10 @@
     </div>
     
     <!-- Status Grid - Hidden for employees -->
-    <div v-if="userRole !== 'employee'" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-      <div class="text-center p-4 bg-green-50 rounded-lg">
-        <div class="text-2xl font-bold text-green-600">{{ onlineCount }}</div>
-        <div class="text-sm text-green-600">Online</div>
-      </div>
-      
+    <div v-if="userRole !== 'employee'" class="grid grid-cols-1 md:grid-cols-1 gap-4 mb-6">
       <div class="text-center p-4 bg-blue-50 rounded-lg">
         <div class="text-2xl font-bold text-blue-600">{{ workingCount }}</div>
-        <div class="text-sm text-blue-600">Working</div>
-      </div>
-      
-      <div class="text-center p-4 bg-gray-50 rounded-lg">
-        <div class="text-2xl font-bold text-gray-600">{{ offlineCount }}</div>
-        <div class="text-sm text-gray-600">Offline</div>
+        <div class="text-sm text-blue-600">Currently Working</div>
       </div>
     </div>
     

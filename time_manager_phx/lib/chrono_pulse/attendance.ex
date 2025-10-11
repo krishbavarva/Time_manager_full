@@ -4,7 +4,20 @@ defmodule ChronoPulse.Attendance do
   alias ChronoPulse.Attendance.Attendance
 
   def list_attendance do
-    Repo.all(Attendance)
+    Attendance
+    |> join(:left, [a], u in assoc(a, :user))
+    |> select([a, u], %{
+      id: a.id,
+      user_id: a.user_id,
+      date: a.date,
+      status: a.status,
+      inserted_at: a.inserted_at,
+      updated_at: a.updated_at,
+      user_name: fragment("COALESCE(?, '') || ' ' || COALESCE(?, '')", u.first_name, u.last_name),
+      user_email: u.email,
+      user_role: u.role
+    })
+    |> Repo.all()
   end
 
   def get_attendance!(id), do: Repo.get!(Attendance, id)

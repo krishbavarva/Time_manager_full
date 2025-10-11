@@ -23,4 +23,18 @@ defmodule ChronoPulseWeb.AttendanceJSON do
       updated_at: attendance.updated_at
     }
   end
+
+  defp data(%{} = attendance) when is_map(attendance) do
+    %{
+      id: attendance.id,
+      user_id: attendance.user_id,
+      date: attendance.date,
+      status: attendance.status,
+      inserted_at: attendance.inserted_at,
+      updated_at: attendance.updated_at,
+      user_name: attendance.user_name,
+      user_email: attendance.user_email,
+      user_role: attendance.user_role
+    }
+  end
 end

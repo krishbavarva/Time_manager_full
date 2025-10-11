@@ -157,14 +157,7 @@
                         Edit
                       </button>
                       <button
-                        @click="showManageEmployeesModal(teamData, teamData.employees)"
-                        class="text-purple-600 hover:text-purple-900 text-xs px-2 py-1"
-                        title="Manage Members"
-                      >
-                        Members
-                      </button>
-                      <button
-                        @click="showAssignManagersModal(teamData)"
+                        @click="openAssignManagersModal(teamData)"
                         class="text-orange-600 hover:text-orange-900 text-xs px-2 py-1"
                         title="Assign Managers"
                       >
@@ -392,23 +385,34 @@
           </div>
 
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Select Managers</label>
-            <div v-if="availableManagers.length > 0" class="max-h-40 overflow-y-auto border border-gray-300 rounded-md">
-              <div v-for="manager in availableManagers" :key="manager.id" class="flex items-center p-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Select Manager</label>
+            <div v-if="availableManagers.length > 0" class="max-h-60 overflow-y-auto border border-gray-300 rounded-md">
+              <div v-for="manager in availableManagers" :key="manager.id" class="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0">
                 <input
-                  type="checkbox"
+                  type="radio"
+                  :id="'manager-' + manager.id"
                   :value="manager.id"
-                  v-model="selectedManagers"
-                  class="mr-2"
+                  v-model="selectedManagerId"
+                  class="mr-3 h-4 w-4 text-orange-600 focus:ring-orange-500"
                 />
-                <label class="text-sm text-gray-900">
+                <label :for="'manager-' + manager.id" class="text-sm text-gray-900 cursor-pointer flex-1">
                   {{ manager.first_name && manager.last_name
                       ? `${manager.first_name} ${manager.last_name}`
                       : manager.username || 'Unknown Manager' }}
+                  <span v-if="manager.email" class="text-xs text-gray-500 ml-2">({{ manager.email }})</span>
+                  <span v-if="selectedTeam?.manager?.id === manager.id" class="ml-2 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Current</span>
                 </label>
               </div>
             </div>
             <p v-else class="text-sm text-gray-500 italic">No managers available</p>
+            <button
+              v-if="selectedManagerId"
+              type="button"
+              @click="selectedManagerId = null"
+              class="mt-2 text-xs text-red-600 hover:text-red-800"
+            >
+              Clear Selection (Remove Manager)
+            </button>
           </div>
 
           <div class="flex justify-end space-x-3 pt-4">
@@ -557,7 +561,7 @@ export default {
       this.editTeam = { id: '', description: '' }
     },
 
-    showManageEmployeesModal(team, currentMembers) {
+    openManageEmployeesModal(team, currentMembers) {
       console.log('Manage Employees button clicked for team:', team)
       console.log('Current members:', currentMembers)
       this.selectedTeam = team
@@ -572,10 +576,12 @@ export default {
       this.selectedEmployees = []
     },
 
-    showAssignManagersModal(team) {
+    openAssignManagersModal(team) {
       console.log('Assign Managers button clicked for team:', team)
+      console.log('Current team manager:', team.manager)
       this.selectedTeam = team
-      this.selectedManagers = team.manager ? [team.manager.id] : []
+      this.selectedManagerId = team.manager?.id || null
+      console.log('Selected Manager ID:', this.selectedManagerId)
       this.showAssignManagersModal = true
       console.log('showAssignManagersModal set to:', this.showAssignManagersModal)
     },
@@ -583,7 +589,7 @@ export default {
     closeAssignManagersModal() {
       this.showAssignManagersModal = false
       this.selectedTeam = null
-      this.selectedManagers = []
+      this.selectedManagerId = null
     },
 
     async createTeam() {
@@ -678,19 +684,23 @@ export default {
     async assignManagers() {
       try {
         this.assigning = true
-        // For now, this assigns the first selected manager as the primary manager
-        const managerId = this.selectedManagers.length > 0 ? this.selectedManagers[0] : null
-        if (managerId) {
-          await teamsApi.assignManager(this.selectedTeam.id, managerId)
+        console.log('Assigning manager:', this.selectedManagerId, 'to team:', this.selectedTeam.id)
+        
+        if (this.selectedManagerId) {
+          const response = await teamsApi.assignManager(this.selectedTeam.id, this.selectedManagerId)
+          console.log('Assign manager response:', response)
         } else {
-          await teamsApi.removeManager(this.selectedTeam.id)
+          const response = await teamsApi.removeManager(this.selectedTeam.id)
+          console.log('Remove manager response:', response)
         }
+        
         this.closeAssignManagersModal()
         await this.loadAllTeamsData()
-        this.$toast?.success('Manager assignment updated')
+        this.$toast?.success('Manager assignment updated successfully')
       } catch (error) {
         console.error('Error assigning managers:', error)
-        this.$toast?.error('Failed to assign managers')
+        console.error('Error details:', error.response?.data)
+        this.$toast?.error('Failed to assign manager: ' + (error.response?.data?.error || error.message))
       } finally {
         this.assigning = false
       }

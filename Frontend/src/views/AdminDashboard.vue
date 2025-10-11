@@ -42,13 +42,13 @@
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <div class="flex items-center">
-            <div class="p-3 bg-green-100 rounded-lg">
-              <span class="text-2xl">🟢</span>
+            <div class="p-3 bg-blue-100 rounded-lg">
+              <span class="text-2xl">💼</span>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Online Now</p>
-              <p class="text-2xl font-bold text-gray-900">{{ onlineUsers }}</p>
-              <p class="text-xs text-blue-600">{{ onlinePercentage }}% of total</p>
+              <p class="text-sm font-medium text-gray-500">Currently Working</p>
+              <p class="text-2xl font-bold text-gray-900">{{ workingCount }}</p>
+              <p class="text-xs text-blue-600">Clocked In</p>
             </div>
           </div>
         </div>
@@ -164,8 +164,8 @@
                 <span class="text-gray-900">{{ team.managerName }}</span>
               </div>
               <div class="flex justify-between text-sm">
-                <span class="text-gray-500">Online:</span>
-                <span class="text-green-600">{{ team.onlineCount }}/{{ team.memberCount }}</span>
+                <span class="text-gray-500">Members:</span>
+                <span class="text-blue-600">{{ team.memberCount }}</span>
               </div>
               <div class="flex justify-between text-sm">
                 <span class="text-gray-500">Avg Hours:</span>
@@ -190,7 +190,7 @@ import Chart from 'chart.js/auto'
 
 // Reactive data
 const totalEmployees = ref(0)
-const onlineUsers = ref(0)
+const workingCount = ref(0)
 const averageWorkHours = ref('8:30')
 const productivityScore = ref(87)
 const topPerformers = ref([])
@@ -202,11 +202,6 @@ const hoursChart = ref(null)
 const teamChart = ref(null)
 let hoursChartInstance = null
 let teamChartInstance = null
-
-// Computed properties
-const onlinePercentage = computed(() => {
-  return totalEmployees.value > 0 ? Math.round((onlineUsers.value / totalEmployees.value) * 100) : 0
-})
 
 
 // Lifecycle
@@ -229,30 +224,29 @@ const loadDashboardData = async () => {
     const users = usersResponse.data || []
     totalEmployees.value = users.length
 
-    // Load clock-in data to determine online status
+    // Load clock-in data to determine working status
     const clockPromises = users.map(user => 
       clockinsApi.listByUser(user.id).catch(() => ({ data: [] }))
     )
     const clockResponses = await Promise.all(clockPromises)
     
-    // Calculate online users (clocked in within last 12 hours)
-    let onlineCount = 0
+    // Calculate currently working users (currently clocked in)
+    let currentlyWorking = 0
     let totalHours = 0
     
     users.forEach((user, index) => {
       const clocks = clockResponses[index]?.data || []
       if (clocks.length > 0) {
         const lastClock = clocks[0]
-        const clockTime = new Date(lastClock.time)
-        const hoursSince = (Date.now() - clockTime.getTime()) / (1000 * 60 * 60)
         
-        if (hoursSince < 12 && lastClock.status) {
-          onlineCount++
+        // Only count if currently clocked in (status = true)
+        if (lastClock.status === true) {
+          currentlyWorking++
         }
       }
     })
     
-    onlineUsers.value = onlineCount
+    workingCount.value = currentlyWorking
 
     // Load teams with real data
     const teamsResponse = await teamsApi.list()
@@ -262,28 +256,9 @@ const loadDashboardData = async () => {
       // Get team members by checking if user has team_id matching team.id
       const teamMembers = users.filter(u => u.team_id === team.id)
       
-      // Calculate online members for this team
-      let teamOnlineCount = 0
-      teamMembers.forEach((member, memberIndex) => {
-        // Find the user's index in the main users array
-        const userIndex = users.findIndex(u => u.id === member.id)
-        if (userIndex >= 0) {
-          const clocks = clockResponses[userIndex]?.data || []
-          if (clocks.length > 0) {
-            const lastClock = clocks[0]
-            const clockTime = new Date(lastClock.time)
-            const hoursSince = (Date.now() - clockTime.getTime()) / (1000 * 60 * 60)
-            if (hoursSince < 12 && lastClock.status) {
-              teamOnlineCount++
-            }
-          }
-        }
-      })
-      
       return {
         ...team,
         memberCount: teamMembers.length,
-        onlineCount: teamOnlineCount,
         managerName: team.manager_name || 'Manager',
         averageHours: '8:15'
       }
@@ -391,8 +366,8 @@ const generateSampleData = async () => {
       },
       {
         id: 2,
-        type: 'warning',
-        message: `${onlineUsers.value} employees currently online`,
+        type: 'info',
+        message: `${workingCount.value} employees currently working`,
         timestamp: new Date(Date.now() - 60 * 60 * 1000)
       }
     ]
@@ -477,8 +452,8 @@ const initializeCharts = () => {
 const startLiveUpdates = () => {
   // Simulate real-time updates
   setInterval(() => {
-    // Update online users count
-    onlineUsers.value = Math.floor(totalEmployees.value * (0.6 + Math.random() * 0.3))
+    // Update working users count (currently clocked in)
+    workingCount.value = Math.floor(totalEmployees.value * (0.4 + Math.random() * 0.3))
     
     // Add new activity
     const activities = ['Clocked in', 'Clocked out', 'Started break', 'Ended break']

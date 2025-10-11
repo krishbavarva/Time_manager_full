@@ -20,6 +20,7 @@ const WeeklyTimesheetView = () => import('../views/WeeklyTimesheetView.vue')
 const UserScheduleView = () => import('../views/UserScheduleView.vue')
 const TimesheetApprovalView = () => import('../views/TimesheetApprovalView.vue')
 const AttendanceCalendarView = () => import('../views/AttendanceCalendarView.vue')
+const AdminAttendanceView = () => import('../views/AdminAttendanceView.vue')
 const WorkSessionView = () => import('../views/WorkSessionView.vue')
 const NotFound = () => import('../views/NotFound.vue')
 
@@ -43,6 +44,7 @@ const routes = [
   { path: '/user-schedule', name: 'user-schedule', component: UserScheduleView },
   { path: '/timesheet-approvals', name: 'timesheet-approvals', component: TimesheetApprovalView },
   { path: '/attendance-calendar', name: 'attendance-calendar', component: AttendanceCalendarView },
+  { path: '/admin/attendance', name: 'admin-attendance', component: AdminAttendanceView },
   { path: '/work-session', name: 'work-session', component: WorkSessionView },
   { path: '/users', redirect: '/admin/users' },
   { path: '/signup', redirect: '/admin/users' },
@@ -92,6 +94,34 @@ router.beforeEach((to, from, next) => {
         if (userRole !== 'admin') {
           // Redirect non-admin users to dashboard
           next('/dashboard')
+          return
+        }
+      } catch {
+        // If we can't parse the user data, redirect to login
+        next('/login')
+        return
+      }
+    }
+
+    // Restrict admin access to employee-specific routes
+    const employeeOnlyRoutes = [
+      '/work-session',
+      '/working-times', 
+      '/clockins',
+      '/attendance-calendar',
+      '/weekly-timesheet',
+      '/user-schedule',
+      '/timesheet-approvals'
+    ]
+    
+    if (employeeOnlyRoutes.includes(to.path)) {
+      try {
+        const user = JSON.parse(localStorage.getItem('currentUser') || '{}')
+        const userRole = user.role || 'employee'
+
+        if (userRole === 'admin') {
+          // Redirect admins away from employee-specific routes
+          next('/admin/dashboard')
           return
         }
       } catch {

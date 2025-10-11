@@ -108,19 +108,51 @@
             <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <!-- Employee Actions -->
-              <button
-                @click="$router.push('/work-session')"
-                class="flex items-center justify-center p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-lg hover:from-green-100 hover:to-blue-100 transition-colors border-2 border-green-200"
+              <!-- Employee Actions - Hidden for Admin -->
+              <!-- Mark Attendance Button with Timer -->
+              <div
+                v-if="!isAdmin"
+                class="col-span-1 md:col-span-2"
               >
-                <span class="text-2xl mr-3">🚀</span>
-                <div class="text-left">
-                  <div class="font-medium text-gray-900">Work Session</div>
-                  <div class="text-sm text-gray-500">Start/End your work day</div>
+                <div v-if="!attendanceMarked" class="bg-gradient-to-r from-green-50 to-blue-50 rounded-lg border-2 border-green-200 p-6">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                      <span class="text-3xl mr-4">✅</span>
+                      <div>
+                        <div class="font-semibold text-gray-900 text-lg">Mark Your Attendance</div>
+                        <div class="text-sm text-gray-600">Start your workday timer ({{ scheduledHours }} hours)</div>
+                      </div>
+                    </div>
+                    <button
+                      @click="markAttendance"
+                      :disabled="markingAttendance"
+                      class="px-6 py-3 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 disabled:opacity-50 transition-colors"
+                    >
+                      {{ markingAttendance ? 'Marking...' : 'Mark Present' }}
+                    </button>
+                  </div>
                 </div>
-              </button>
+
+                <div v-else class="bg-gradient-to-r from-green-100 to-blue-100 rounded-lg border-2 border-green-400 p-6">
+                  <div class="text-center">
+                    <div class="flex items-center justify-center mb-3">
+                      <span class="text-3xl mr-3">⏱️</span>
+                      <div class="font-bold text-4xl text-gray-900 font-mono">
+                        {{ formatTimer(remainingSeconds) }}
+                      </div>
+                    </div>
+                    <div class="text-sm text-gray-700 font-medium">
+                      {{ remainingSeconds > 0 ? 'Time remaining in your shift' : '🎉 Shift completed!' }}
+                    </div>
+                    <div class="text-xs text-gray-600 mt-1">
+                      Scheduled: {{ scheduledHours }} hours | Started: {{ attendanceStartTime }}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
               <button
+                v-if="!isAdmin"
                 @click="$router.push('/clockins')"
                 class="flex items-center justify-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
               >
@@ -132,6 +164,7 @@
               </button>
 
               <button
+                v-if="!isAdmin"
                 @click="$router.push('/working-times')"
                 class="flex items-center justify-center p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors"
               >
@@ -143,6 +176,7 @@
               </button>
 
               <button
+                v-if="!isAdmin"
                 @click="$router.push('/user-schedule')"
                 class="flex items-center justify-center p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors"
               >
@@ -154,6 +188,7 @@
               </button>
 
               <button
+                v-if="!isAdmin"
                 @click="$router.push('/weekly-timesheet')"
                 class="flex items-center justify-center p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors"
               >
@@ -165,6 +200,7 @@
               </button>
 
               <button
+                v-if="!isAdmin"
                 @click="$router.push('/attendance-calendar')"
                 class="flex items-center justify-center p-4 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
               >
@@ -189,7 +225,7 @@
               </button>
 
               <button
-                v-if="isManager"
+                v-if="isManager && !isAdmin"
                 @click="$router.push('/timesheet-approvals')"
                 class="flex items-center justify-center p-4 bg-yellow-50 rounded-lg hover:bg-yellow-100 transition-colors"
               >
@@ -296,6 +332,8 @@ import { useRouter } from 'vue-router'
 import { usersApi } from '../api/users'
 import { workingTimesApi } from '../api/workingTimes'
 import { clockinsApi } from '../api/clockins'
+import { attendanceApi } from '../api/attendance'
+import { userSchedulesApi } from '../api/userSchedules'
 import { exportService } from '../services/exportService'
 import { notificationService } from '../services/notificationService'
 import RealTimeStatus from '../components/RealTimeStatus.vue'
@@ -313,6 +351,14 @@ const totalBreakMin = ref(0)
 const productivityScore = ref(0)
 const recentActivities = ref([])
 
+// Attendance Timer
+const attendanceMarked = ref(false)
+const markingAttendance = ref(false)
+const remainingSeconds = ref(0)
+const scheduledHours = ref(8)
+const attendanceStartTime = ref('')
+let timerInterval = null
+
 // Chart refs
 const workHoursChart = ref(null)
 const productivityChart = ref(null)
@@ -325,17 +371,126 @@ const isAdmin = computed(() => userRole.value === 'admin')
 const isManager = computed(() => userRole.value === 'manager' || userRole.value === 'admin')
 const displayProductivityScore = computed(() => Math.round(productivityScore.value))
 
+// Attendance Functions
+const checkTodayAttendance = async () => {
+  try {
+    if (!user.value?.id) return
+    
+    const today = new Date().toISOString().split('T')[0]
+    const attendanceResponse = await attendanceApi.list()
+    const todayAttendance = attendanceResponse.data?.find(
+      a => a.user_id === user.value.id && a.date === today && a.status === 'present'
+    )
+    
+    if (todayAttendance) {
+      attendanceMarked.value = true
+      // Calculate remaining time
+      const startTime = new Date(todayAttendance.inserted_at)
+      attendanceStartTime.value = startTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      
+      const totalSeconds = scheduledHours.value * 3600
+      const elapsedSeconds = Math.floor((Date.now() - startTime.getTime()) / 1000)
+      remainingSeconds.value = Math.max(0, totalSeconds - elapsedSeconds)
+      
+      if (remainingSeconds.value > 0) {
+        startTimer()
+      }
+    }
+  } catch (error) {
+    console.error('Error checking attendance:', error)
+  }
+}
+
+const loadScheduledHours = async () => {
+  try {
+    if (!user.value?.id) return
+    
+    const today = new Date()
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+    const dayName = dayNames[today.getDay()]
+    
+    const schedules = await userSchedulesApi.list(user.value.id)
+    const todaySchedule = schedules.data?.find(s => s.day_of_week === dayName)
+    
+    if (todaySchedule && todaySchedule.scheduled_hours) {
+      scheduledHours.value = todaySchedule.scheduled_hours
+    }
+  } catch (error) {
+    console.error('Error loading schedule:', error)
+    scheduledHours.value = 8 // Default to 8 hours
+  }
+}
+
+const markAttendance = async () => {
+  try {
+    markingAttendance.value = true
+    
+    const today = new Date().toISOString().split('T')[0]
+    const now = new Date()
+    
+    // Mark attendance as present
+    await attendanceApi.create({
+      user_id: user.value.id,
+      date: today,
+      status: 'present'
+    })
+    
+    attendanceMarked.value = true
+    attendanceStartTime.value = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    remainingSeconds.value = scheduledHours.value * 3600 // Convert hours to seconds
+    
+    startTimer()
+    notificationService.success(`Attendance marked! Timer started for ${scheduledHours.value} hours`)
+  } catch (error) {
+    console.error('Error marking attendance:', error)
+    notificationService.error('Failed to mark attendance')
+  } finally {
+    markingAttendance.value = false
+  }
+}
+
+const startTimer = () => {
+  if (timerInterval) clearInterval(timerInterval)
+  
+  timerInterval = setInterval(() => {
+    if (remainingSeconds.value > 0) {
+      remainingSeconds.value--
+    } else {
+      clearInterval(timerInterval)
+      notificationService.warning('⏰ Time is over! Your shift has ended.')
+      
+      // Play sound notification if possible
+      try {
+        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBSuBzvLZizcIGWi77eeeTRALT6fj8LZjHAU3j9fyz3osBSJ1x/DdkEELFF+06uunVRULRp/g8r1sIgUsgs/y2Yk3CBlou+3nnk0QC0+n4/C2YxwFN4/X8tB6LAUidcfw3ZBCC')
+        audio.play().catch(() => {})
+      } catch (e) {
+        // Ignore audio errors
+      }
+    }
+  }, 1000)
+}
+
+const formatTimer = (seconds) => {
+  const hours = Math.floor(seconds / 3600)
+  const minutes = Math.floor((seconds % 3600) / 60)
+  const secs = seconds % 60
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+}
+
 // Lifecycle
 onMounted(() => {
   loadUser()
   loadDashboardData()
   initializeCharts()
   startLiveUpdates()
+  loadScheduledHours()
+  checkTodayAttendance()
 })
 
 onUnmounted(() => {
   if (workHoursChartInstance) workHoursChartInstance.destroy()
   if (productivityChartInstance) productivityChartInstance.destroy()
+  if (timerInterval) clearInterval(timerInterval)
 })
 
 // Methods
@@ -517,7 +672,6 @@ const exportReport = () => {
   try {
     const reportData = {
       totalEmployees: 1,
-      onlineEmployees: 1,
       totalTeams: 1,
       averageWorkHours: totalWorkMin.value / 60,
       productivityScore: Math.round(productivityScore.value)

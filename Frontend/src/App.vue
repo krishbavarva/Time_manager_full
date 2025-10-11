@@ -7,12 +7,12 @@
           <div class="flex items-center space-x-8">
             <RouterLink v-if="isAdmin" to="/admin/dashboard" class="text-gray-700 hover:text-blue-600 font-medium">Admin Dashboard</RouterLink>
             <RouterLink to="/dashboard" class="text-gray-700 hover:text-blue-600 font-medium">Dashboard</RouterLink>
-            <RouterLink v-if="!isAdmin" to="/work-session" class="text-gray-700 hover:text-blue-600 font-medium">Work Session</RouterLink>
             <RouterLink v-if="!isAdmin" to="/working-times" class="text-gray-700 hover:text-blue-600 font-medium">Working Times</RouterLink>
             <RouterLink v-if="!isAdmin" to="/clockins" class="text-gray-700 hover:text-blue-600 font-medium">Clockins</RouterLink>
             <RouterLink v-if="!isAdmin" to="/attendance-calendar" class="text-gray-700 hover:text-blue-600 font-medium">Attendance</RouterLink>
             <RouterLink v-if="isAdmin" to="/admin/users" class="text-gray-700 hover:text-blue-600 font-medium">Users</RouterLink>
             <RouterLink v-if="isAdmin" to="/admin/teams" class="text-gray-700 hover:text-blue-600 font-medium">Admin Teams</RouterLink>
+            <RouterLink v-if="isAdmin" to="/admin/attendance" class="text-gray-700 hover:text-blue-600 font-medium">Attendance</RouterLink>
             <RouterLink v-if="isManager && !isAdmin" to="/teams" class="text-gray-700 hover:text-blue-600 font-medium">Teams</RouterLink>
             <RouterLink v-if="isManager && !isAdmin" to="/manager/team" class="text-gray-700 hover:text-blue-600 font-medium">Team Members</RouterLink>
           </div>

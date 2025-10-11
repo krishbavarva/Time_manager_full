@@ -19,7 +19,11 @@
     </div>
     
     <div class="mt-6 p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
-      <h2 class="text-xl font-semibold text-gray-900 m-0 mb-4">Clock In/Out</h2>
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+        <p class="text-sm text-blue-800 font-medium">📋 Official Attendance Tracking</p>
+        <p class="text-xs text-blue-700">This is for official clock in/out attendance. Independent from Work Session tracking.</p>
+      </div>
+      <h2 class="text-xl font-semibold text-gray-900 m-0 mb-4">Clock In/Out (Official Attendance)</h2>
       <div class="flex flex-wrap items-center gap-4 mb-6">
         <button 
           @click="toggle" 

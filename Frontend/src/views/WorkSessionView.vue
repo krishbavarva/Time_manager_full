@@ -53,7 +53,12 @@
           </div>
         </div>
 
-        <!-- Work Start/End Buttons -->
+        <!-- Work Start/End Buttons - SEPARATE from Clock In/Out -->
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+          <p class="text-sm text-yellow-800 font-medium mb-2">⚠️ Independent Work Tracking</p>
+          <p class="text-xs text-yellow-700">This is separate from Clock In/Out. Use Clock In/Out for actual attendance tracking.</p>
+        </div>
+        
         <div class="flex gap-4">
           <button
             v-if="!isWorkingNow"
@@ -62,7 +67,7 @@
             :disabled="processing"
           >
             <span class="text-2xl">▶️</span>
-            <span>{{ processing ? 'Starting...' : 'Work Start' }}</span>
+            <span>{{ processing ? 'Starting...' : 'Work Start (Independent)' }}</span>
           </button>
 
           <button
@@ -72,7 +77,7 @@
             :disabled="processing"
           >
             <span class="text-2xl">⏹️</span>
-            <span>{{ processing ? 'Ending...' : 'Work End' }}</span>
+            <span>{{ processing ? 'Ending...' : 'Work End (Independent)' }}</span>
           </button>
         </div>
       </div>
@@ -187,30 +192,7 @@
       </div>
     </div>
 
-    <!-- End of Day Alert -->
-    <div v-if="showEndOfDayAlert" class="fixed top-4 right-4 bg-orange-100 border-l-4 border-orange-500 p-4 rounded-lg shadow-lg z-50 max-w-md animate-bounce">
-      <div class="flex items-start">
-        <span class="text-3xl mr-3">⏰</span>
-        <div class="flex-1">
-          <h4 class="font-bold text-orange-900 mb-1">Time to Clock Out!</h4>
-          <p class="text-sm text-orange-800">Your scheduled work hours have ended. Please clock out now.</p>
-          <div class="mt-3 flex gap-2">
-            <button
-              @click="handleWorkEnd"
-              class="px-4 py-2 bg-orange-600 text-white text-sm font-medium rounded hover:bg-orange-700"
-            >
-              Clock Out Now
-            </button>
-            <button
-              @click="dismissEndOfDayAlert"
-              class="px-4 py-2 bg-white text-orange-600 text-sm font-medium rounded border border-orange-600 hover:bg-orange-50"
-            >
-              Dismiss
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- NO END OF DAY ALERTS - completely separated system -->
   </div>
 </template>
 
@@ -236,14 +218,11 @@ const scheduledStart = ref('09:00')
 const scheduledEnd = ref('17:00')
 const showEarlyArrivalModal = ref(false)
 const showLateArrivalModal = ref(false)
-const showEndOfDayAlert = ref(false)
 const earlyArrivalReason = ref('')
 const lateArrivalReason = ref('')
 const actualStartTime = ref('')
 const earlyMinutes = ref(0)
 const lateMinutes = ref(0)
-const endOfDayAlertTimeout = ref(null)
-const emailAlertTimeout = ref(null)
 
 let timerInterval = null
 let endOfDayCheckInterval = null
@@ -308,26 +287,13 @@ const loadUserSchedule = async () => {
 }
 
 const checkCurrentStatus = async () => {
-  try {
-    const user = JSON.parse(localStorage.getItem('currentUser') || '{}')
-    const response = await clockinsApi.listByUser(user.id)
-    const clocks = response.data || []
-    
-    if (clocks.length > 0) {
-      const lastClock = clocks[0]
-      isWorkingNow.value = lastClock.status === true
-      
-      if (isWorkingNow.value) {
-        workStartDate.value = new Date(lastClock.time)
-        workStartTime.value = formatDateTime(lastClock.time)
-        startLiveTimer()
-      }
-    }
-    
-    await loadTodaySummary()
-  } catch (error) {
-    console.error('Error checking status:', error)
-  }
+  // NO CLOCK STATUS CHECKING - completely separated from clock system
+  // Work Session is independent of clock in/out system
+  console.log('🟡 Work Session status check - independent of clock system')
+  
+  // Always start with not working state
+  isWorkingNow.value = false
+  await loadTodaySummary()
 }
 
 const handleWorkStart = async () => {
@@ -419,11 +385,34 @@ const startWork = async (reason = null, isLate = false) => {
   try {
     const user = JSON.parse(localStorage.getItem('currentUser') || '{}')
     
-    // Get location
-    const location = await getLocation()
+    // NO AUTO CLOCK IN - Work Start is completely separate from clock system
+    // User must manually clock in if they want to
     
-    // Clock in via API
-    await clockinsApi.toggleForUser(user.id, location)
+    // Mark attendance as present for today (only if not already marked)
+    try {
+      const attendanceApi = (await import('@/api/attendance')).attendanceApi
+      const today = new Date().toISOString().split('T')[0]
+      
+      // Check if attendance already exists for today
+      const existingAttendance = await attendanceApi.list()
+      const todayAttendance = existingAttendance.data?.find(a => 
+        a.user_id === user.id && a.date === today
+      )
+      
+      if (!todayAttendance) {
+        await attendanceApi.create({
+          user_id: user.id,
+          date: today,
+          status: 'present'
+        })
+        console.log('✅ Attendance marked as present')
+      } else {
+        console.log('✅ Attendance already marked for today')
+      }
+    } catch (error) {
+      console.error('⚠️ Error marking attendance:', error)
+      // Don't fail the whole operation if attendance marking fails
+    }
     
     isWorkingNow.value = true
     workStartDate.value = new Date()
@@ -447,15 +436,11 @@ const startWork = async (reason = null, isLate = false) => {
 }
 
 const handleWorkEnd = async () => {
+  console.log('🟡 Work End button pressed - COMPLETELY SEPARATE from Clock Out')
   processing.value = true
   try {
-    const user = JSON.parse(localStorage.getItem('currentUser') || '{}')
-    
-    // Get location
-    const location = await getLocation()
-    
-    // Clock out via API
-    await clockinsApi.toggleForUser(user.id, location)
+    // NO AUTO CLOCK OUT - Work End is completely separate from clock system
+    // User must manually clock out if they want to
     
     // Calculate hours
     const endTime = new Date()
@@ -497,6 +482,9 @@ const startLiveTimer = () => {
   timerInterval = setInterval(() => {
     const now = new Date()
     liveSeconds.value = Math.floor((now - workStartDate.value) / 1000)
+    
+    // NO AUTO WORK END - completely separated from clock system
+    // User must manually press Work End button
   }, 1000)
 }
 
@@ -508,47 +496,7 @@ const stopLiveTimer = () => {
   liveSeconds.value = 0
 }
 
-const checkEndOfDay = () => {
-  if (!isWorkingNow.value) return
-  
-  const now = new Date()
-  const [schedHour, schedMin] = scheduledEnd.value.split(':').map(Number)
-  const schedEndTime = schedHour * 60 + schedMin
-  const currentTime = now.getHours() * 60 + now.getMinutes()
-  
-  // If it's past scheduled end time and user hasn't clocked out
-  if (currentTime >= schedEndTime && !showEndOfDayAlert.value) {
-    showEndOfDayAlert.value = true
-    
-    // Set timeout to send email if no response in 1 minute
-    emailAlertTimeout.value = setTimeout(async () => {
-      if (isWorkingNow.value && currentUser.value) {
-        await emailService.sendForgotClockOutEmail(currentUser.value, {
-          clock_in_time: workStartTime.value,
-          expected_clock_out: scheduledEnd.value,
-          current_time: formatDateTime(new Date())
-        })
-        notificationService.warning('Clock-out reminder sent to your email')
-      }
-    }, 60000) // 1 minute
-  }
-}
-
-const dismissEndOfDayAlert = () => {
-  showEndOfDayAlert.value = false
-  if (emailAlertTimeout.value) {
-    clearTimeout(emailAlertTimeout.value)
-    emailAlertTimeout.value = null
-  }
-}
-
-const clearEndOfDayAlert = () => {
-  showEndOfDayAlert.value = false
-  if (emailAlertTimeout.value) {
-    clearTimeout(emailAlertTimeout.value)
-    emailAlertTimeout.value = null
-  }
-}
+// NO END OF DAY CHECKING - completely separated system
 
 const loadTodaySummary = async () => {
   try {
@@ -619,15 +567,15 @@ onMounted(async () => {
   await loadUserSchedule()
   await checkCurrentStatus()
   
-  // Check end of day every minute
-  endOfDayCheckInterval = setInterval(checkEndOfDay, 60000)
-  checkEndOfDay() // Check immediately
+  // NO END OF DAY CHECKING - completely separated system
+  // User must manually manage their work sessions
+  console.log('🟡 Work Session mounted - no automatic end-of-day checking')
 })
 
 onUnmounted(() => {
   stopLiveTimer()
+  // Clean up any remaining intervals
   if (endOfDayCheckInterval) clearInterval(endOfDayCheckInterval)
-  if (emailAlertTimeout.value) clearTimeout(emailAlertTimeout.value)
 })
 </script>
 
