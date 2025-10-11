@@ -19,6 +19,9 @@ defmodule ChronoPulse.Accounts.User do
     
     # flexible time permission
     field :flexible_time_enabled, :boolean, default: false
+    
+    # salary
+    field :hourly_rate, :float, default: 15.0
 
     timestamps(type: :utc_datetime)
   end
@@ -53,9 +56,10 @@ defmodule ChronoPulse.Accounts.User do
   """
   def update_changeset(user, attrs, _opts \\ []) do
     user
-    |> cast(attrs, [:username, :email, :first_name, :last_name, :role, :flexible_time_enabled, :password])
+    |> cast(attrs, [:username, :email, :first_name, :last_name, :role, :flexible_time_enabled, :hourly_rate, :password])
     |> validate_required([:username, :email, :role])
     |> validate_inclusion(:role, ["employee", "manager", "admin"])
+    |> validate_number(:hourly_rate, greater_than: 0)
     |> unique_constraint(:email)
     |> unique_constraint(:username)
     |> validate_length(:password, min: 6)
@@ -67,7 +71,8 @@ defmodule ChronoPulse.Accounts.User do
   """
   def changeset(user, attrs) do
     user
-    |> cast(attrs, [:username, :email, :first_name, :last_name, :role, :flexible_time_enabled])
+    |> cast(attrs, [:username, :email, :first_name, :last_name, :role, :flexible_time_enabled, :hourly_rate])
     |> validate_required([:username, :email])
+    |> validate_number(:hourly_rate, greater_than: 0)
   end
 end

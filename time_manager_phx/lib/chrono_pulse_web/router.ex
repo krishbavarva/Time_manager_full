@@ -51,8 +51,21 @@ defmodule ChronoPulseWeb.Router do
     post "/timesheet_approvals/:id/approve", TimesheetApprovalController, :approve
     post "/timesheet_approvals/:id/reject", TimesheetApprovalController, :reject
     
-    # Other routes
+    # Salary routes
+    get "/salaries/weekly", SalaryController, :weekly
+    get "/salaries/user/:user_id/weekly", SalaryController, :user_weekly
+    get "/salaries/overtime/:user_id", SalaryController, :overtime_details
+    post "/salaries/overtime/:id/approve", SalaryController, :approve_overtime
+    post "/salaries/overtime/:id/reject", SalaryController, :reject_overtime
+    
+    # Complaints routes
+    get "/complaints", UserComplaintController, :index
+    get "/complaints/user/:user_id", UserComplaintController, :user_complaints
     post "/complaints", UserComplaintController, :create
+    put "/complaints/:id", UserComplaintController, :update
+    delete "/complaints/:id", UserComplaintController, :delete
+    
+    # Other routes
     post "/chat", ChatController, :create
     resources "/teams", TeamController, except: [:new, :edit]
     get "/managers/:manager_id/teams", TeamController, :by_manager

@@ -118,6 +118,12 @@ Time Management System
  */
 export const sendEmail = async (params) => {
   try {
+    console.log('📧 Attempting to send email to:', params.to_email)
+    console.log('📧 Email subject:', params.subject)
+    console.log('📧 Using EmailJS Service ID:', EMAILJS_SERVICE_ID)
+    console.log('📧 Using EmailJS Template ID:', EMAILJS_TEMPLATE_ID)
+    console.log('📧 Using EmailJS Public Key:', EMAILJS_PUBLIC_KEY)
+    
     const templateParams = {
       to_email: params.to_email,
       to_name: params.to_name,
@@ -127,16 +133,28 @@ export const sendEmail = async (params) => {
       reply_to: 'noreply@timemanager.com'
     }
 
+    console.log('📧 Template parameters:', templateParams)
+
     const response = await emailjs.send(
       EMAILJS_SERVICE_ID,
       EMAILJS_TEMPLATE_ID,
       templateParams
     )
 
-    console.log('Email sent successfully:', response)
+    console.log('✅ Email sent successfully:', response)
+    alert(`✅ Email notification sent to ${params.to_email}`)
     return { success: true, response }
   } catch (error) {
-    console.error('Failed to send email:', error)
+    console.error('❌ Failed to send email:', error)
+    console.error('❌ Error details:', {
+      message: error.text || error.message,
+      status: error.status,
+      name: error.name,
+      stack: error.stack
+    })
+    
+    // Show user-friendly error message
+    alert(`⚠️ Email notification failed: ${error.text || error.message || 'Unknown error'}\n\nPlease check console for details.`)
     return { success: false, error }
   }
 }

@@ -23,7 +23,8 @@ defmodule ChronoPulseWeb.UserJSON do
       first_name: user.first_name,
       last_name: user.last_name,
       role: user.role,
-      flexible_time_enabled: user.flexible_time_enabled || false
+      flexible_time_enabled: user.flexible_time_enabled || false,
+      hourly_rate: user.hourly_rate || 15.0
     }
   end
 end

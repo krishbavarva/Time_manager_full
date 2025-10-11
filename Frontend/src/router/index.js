@@ -21,6 +21,9 @@ const UserScheduleView = () => import('../views/UserScheduleView.vue')
 const TimesheetApprovalView = () => import('../views/TimesheetApprovalView.vue')
 const AttendanceCalendarView = () => import('../views/AttendanceCalendarView.vue')
 const AdminAttendanceView = () => import('../views/AdminAttendanceView.vue')
+const AdminSalaryView = () => import('../views/AdminSalaryView.vue')
+const AdminComplaintsView = () => import('../views/AdminComplaintsView.vue')
+const MyComplaintsView = () => import('../views/MyComplaintsView.vue')
 const WorkSessionView = () => import('../views/WorkSessionView.vue')
 const NotFound = () => import('../views/NotFound.vue')
 
@@ -45,6 +48,9 @@ const routes = [
   { path: '/timesheet-approvals', name: 'timesheet-approvals', component: TimesheetApprovalView },
   { path: '/attendance-calendar', name: 'attendance-calendar', component: AttendanceCalendarView },
   { path: '/admin/attendance', name: 'admin-attendance', component: AdminAttendanceView },
+  { path: '/admin/salary', name: 'admin-salary', component: AdminSalaryView },
+  { path: '/admin/complaints', name: 'admin-complaints', component: AdminComplaintsView },
+  { path: '/my-complaints', name: 'my-complaints', component: MyComplaintsView },
   { path: '/work-session', name: 'work-session', component: WorkSessionView },
   { path: '/users', redirect: '/admin/users' },
   { path: '/signup', redirect: '/admin/users' },
