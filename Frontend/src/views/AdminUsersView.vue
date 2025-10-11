@@ -326,9 +326,9 @@
                   required
                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="employee">Employee</option>
-                  <option value="manager">Manager</option>
-                  <option value="admin">Admin</option>
+                  <option value="employee">employee</option>
+                  <option value="manager">manager</option>
+                  <option value="admin">admin</option>
                 </select>
               </div>
               

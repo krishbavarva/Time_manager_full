@@ -65,7 +65,7 @@ export default {
       messages: [
         {
           role: 'assistant',
-          content: 'Hello! I\'m your Time Manager Assistant. How can I help you today?'
+          content: 'Hello! I\'m your Time Manager Assistant.'
         }
       ]
     };
@@ -85,47 +85,45 @@ export default {
       }
     },
     async sendMessage() {
-      if (!this.userInput.trim() || this.isLoading) return;
+  if (!this.userInput.trim() || this.isLoading) return;
 
-      // Add user message
-      const userMessage = { role: 'user', content: this.userInput };
-      this.messages.push(userMessage);
-      this.userInput = '';
-      this.isLoading = true;
+  const userMessage = { role: 'user', content: this.userInput };
+  this.messages.push(userMessage);
+  this.userInput = '';
+  this.isLoading = true;
 
-      try {
-        const response = await chatService.sendMessage([
-          {
-            role: 'system',
-            content: `You are an instructional chatbot. Your job is to guide users on how to use the Time Manager website. 
-            The website is a time scheduler for employees. Time Manager has been overrun by villains and the time management for 
-            the employees is in shambles. This website allows users to login, signup, set their own time schedule, 
-            clock in/out, and view their work time history and statistics.`
-          },
-          ...this.messages
-        ]);
-        
-        const assistantMessage = response.choices[0].message;
-        this.messages.push(assistantMessage);
-      } catch (error) {
-        console.error('Error:', error);
-        this.messages.push({
-          role: 'assistant',
-          content: 'Sorry, I encountered an error. Please try again later.'
-        });
-      } finally {
-        this.isLoading = false;
-        this.scrollToBottom();
-      }
-    },
-    scrollToBottom() {
-      this.$nextTick(() => {
-        const container = this.$refs.messagesContainer;
-        if (container) {
-          container.scrollTop = container.scrollHeight;
-        }
-      });
-    }
+  try {
+    const response = await chatService.sendMessage([
+      {
+        role: 'system',
+        content: `You are an instructional chatbot. Your job is to guide users on how to use the Time Manager website. 
+        The website is a time scheduler for employees. Time Manager has been overrun by villains and the time management for 
+        the employees is in shambles. This website allows users to login, signup, set their own time schedule, 
+        clock in/out, and view their work time history and statistics.`
+      },
+      ...this.messages
+    ]);
+
+    console.log('✅ Full Chat API Response:', response);
+
+    // Just display the entire response as assistant message
+    this.messages.push({
+      role: 'assistant',
+      content: JSON.stringify(response, null, 2) // pretty-print
+    });
+
+  } catch (error) {
+    console.error('❌ Chatbot Error:', error);
+    this.messages.push({
+      role: 'assistant',
+      content: '⚠️ Sorry, I encountered an error. Please try again later.'
+    });
+  } finally {
+    this.isLoading = false;
+    this.scrollToBottom();
+  }
+}
+
   }
 };
 </script>

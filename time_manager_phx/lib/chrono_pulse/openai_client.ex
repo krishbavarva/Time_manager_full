@@ -4,7 +4,7 @@ defmodule ChronoPulse.OpenAIClient do
   @base_url "https://api.openai.com/v1"
 
   # 🔑 Hardcode your key for testing (replace with your real key)
-  @api_key ""
+  @api_key "YOUR API KEY HERE"
 
   plug Tesla.Middleware.BaseUrl, @base_url
   plug Tesla.Middleware.Headers, [
