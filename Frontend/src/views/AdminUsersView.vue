@@ -236,6 +236,17 @@
                       ✏️
                     </button>
                     <button
+                      v-if="currentUser.id !== user.id && user.role !== 'admin'"
+                      @click="toggleUserRole(user)"
+                      :class="[
+                        'font-bold hover:opacity-80 transition-opacity',
+                        user.role === 'manager' ? 'text-green-600' : 'text-purple-600'
+                      ]"
+                      :title="user.role === 'manager' ? 'Demote to Employee' : 'Promote to Manager'"
+                    >
+                      {{ user.role === 'manager' ? '⬇️' : '⬆️' }}
+                    </button>
+                    <button
                       v-if="currentUser.id !== user.id"
                       @click="confirmDelete(user)"
                       class="text-red-600 hover:text-red-800"
@@ -645,6 +656,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { usersApi } from '../api/users'
 import { teamsApi } from '../api/teams'
+import { notificationService } from '../services/notificationService'
 
 // Reactive data
 const users = ref([])
@@ -827,6 +839,32 @@ const viewUserDetails = async (user) => {
   editHourlyRate.value = user.hourly_rate || 15.0
   console.log('selectedUser set to:', selectedUser.value)
   await loadUserDetailedData()
+}
+
+const toggleUserRole = async (user) => {
+  const newRole = user.role === 'manager' ? 'employee' : 'manager'
+  const action = newRole === 'manager' ? 'promote' : 'demote'
+  const actionPastTense = newRole === 'manager' ? 'promoted' : 'demoted'
+  
+  if (confirm(`Are you sure you want to ${action} ${user.first_name} ${user.last_name} to ${newRole.toUpperCase()}?`)) {
+    try {
+      await usersApi.update(user.id, { role: newRole })
+      await loadUsers()
+      
+      // Show success notification
+      notificationService.success(
+        `Successfully ${actionPastTense} ${user.first_name} ${user.last_name} to ${newRole.toUpperCase()}`,
+        { title: 'Role Updated' }
+      )
+    } catch (err) {
+      error.value = `Failed to update user role`
+      notificationService.error(
+        `Failed to update role for ${user.first_name} ${user.last_name}`,
+        { title: 'Update Failed' }
+      )
+      console.error('Error updating user role:', err)
+    }
+  }
 }
 
 const confirmDelete = (user) => {

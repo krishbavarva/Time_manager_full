@@ -85,7 +85,7 @@
             <tbody class="bg-white divide-y divide-gray-200">
               <tr v-for="timesheet in filteredTimesheets" :key="timesheet.id" class="hover:bg-gray-50">
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  User {{ timesheet.user_id }}
+                  {{ timesheet.user?.first_name || 'Unknown' }} {{ timesheet.user?.last_name || 'User' }}
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {{ formatDate(timesheet.start) }}

@@ -73,14 +73,21 @@ onMounted(() => {
   top: 1rem;
   right: 1rem;
   z-index: 1000;
-  min-width: 300px;
-  max-width: 90vw;
+  min-width: 450px;
+  max-width: 600px;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
   overflow: hidden;
   transition: all 0.3s ease;
   transform: translateX(0);
   opacity: 1;
+}
+
+@media (max-width: 640px) {
+  .notification {
+    min-width: 320px;
+    max-width: 90vw;
+  }
 }
 
 .notification.success {

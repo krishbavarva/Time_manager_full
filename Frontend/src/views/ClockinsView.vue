@@ -46,13 +46,13 @@
         >
           Today
         </button>
-        <!-- <button 
-          type="button" 
-          @click="switchToDataDate" 
-          class="px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 hover:border-blue-700"
-        >
-          Data Date
-        </button> -->
+                                                                                                                                                                                                                            <!-- <button 
+                                                                                                                                                                                                                              type="button" 
+                                                                                                                                                                                                                              @click="switchToDataDate" 
+                                                                                                                                                                                                                              class="px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 hover:border-blue-700"
+                                                                                                                                                                                                                            >
+                                                                                                                                                                                                                              Data Date
+                                                                                                                                                                                                                            </button> -->
         <!-- <button 
           type="button" 
           @click="testEmail" 
@@ -280,7 +280,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { clockinsApi } from '../api/clockins'
 import { chartsApi } from '../api/charts'
@@ -362,6 +362,7 @@ const runningSince = ref(null)
 const liveSeconds = ref(0)
 let timer = null
 let clockOutAlertTimer = null
+let dayCheckTimer = null
 
 // User schedule and alert state
 const userSchedules = ref([])
@@ -590,7 +591,7 @@ const filterClockinsByDate = () => {
 const filterSessionsAndBreaks = () => {
   try {
     if (!sessionsDate.value) {
-      sessionsDate.value = '2025-10-08'; // Default to a date with data
+      sessionsDate.value = today; // Default to today
     }
     
     console.log('🔵 Filtering sessions/breaks for date:', sessionsDate.value)
@@ -712,13 +713,19 @@ const load = async () => {
         stopTimer()
       }
       
-      // If no date is selected or selected date has no data, switch to the date with the most recent data
+      // Only switch to most recent data date if no date is explicitly selected
+      // Don't override if user wants to view today's date
       const mostRecentDate = new Date(lastRecord.time).toISOString().split('T')[0]
-      if (!selectedDate.value || selectedDate.value === today) {
-        console.log('🔵 Switching to most recent data date:', mostRecentDate)
+      if (!selectedDate.value) {
+        console.log('🔵 No date selected, switching to most recent data date:', mostRecentDate)
         selectedDate.value = mostRecentDate
         chartsDate.value = mostRecentDate
         sessionsDate.value = mostRecentDate
+      } else {
+        // Keep the selected date but ensure charts and sessions use the same date
+        console.log('🔵 Using selected date:', selectedDate.value)
+        chartsDate.value = selectedDate.value
+        sessionsDate.value = selectedDate.value
       }
     } else {
       isClockedIn.value = false
@@ -740,13 +747,14 @@ const loadCharts = async () => {
     hoursRows.value = []; 
     breaks.value = []; 
     sessions.value = [];
+    await nextTick();
     updateCharts();
     return; 
   }
   
-  // If no date is selected, default to a date with data (2025-10-08)
+  // If no date is selected, use today's date
   if (!chartsDate.value) {
-    chartsDate.value = '2025-10-08'; // Use a date that has data
+    chartsDate.value = today;
   }
   
   
@@ -774,6 +782,9 @@ const loadCharts = async () => {
     
     // Update filtered sessions and breaks
     filterSessionsAndBreaks();
+    
+    // Wait for DOM to be ready before rendering charts
+    await nextTick();
     updateCharts();
   } catch (error) {
     console.error('Error loading charts data:', error);
@@ -782,6 +793,7 @@ const loadCharts = async () => {
     sessions.value = [];
     filteredSessions.value = [];
     filteredBreaks.value = [];
+    await nextTick();
     updateCharts();
   } finally {
     chartsLoading.value = false;
@@ -1139,11 +1151,25 @@ const filterSessionsByDate = () => {
 }
 
 const switchToToday = () => {
-  console.log('🔵 Switching to today:', today)
-  selectedDate.value = today
-  chartsDate.value = today
-  sessionsDate.value = today
+  // Get fresh today's date in case day has changed
+  const freshToday = getTodayDate()
+  console.log('🔵 Switching to today:', freshToday)
+  selectedDate.value = freshToday
+  chartsDate.value = freshToday
+  sessionsDate.value = freshToday
   handleDateChange()
+}
+
+// Function to check if we need to update to today's date
+const checkAndUpdateToToday = () => {
+  const freshToday = getTodayDate()
+  if (selectedDate.value !== freshToday) {
+    console.log('🔵 Day has changed, updating to today:', freshToday)
+    selectedDate.value = freshToday
+    chartsDate.value = freshToday
+    sessionsDate.value = freshToday
+    handleDateChange()
+  }
 }
 
 const switchToDataDate = () => {
@@ -1196,6 +1222,7 @@ const testEmail = async () => {
 
 onMounted(async () => {
   console.log('🔵 ClockinsView mounted')
+  console.log('🔵 Today date:', today)
   try {
     const userString = localStorage.getItem('currentUser')
     console.log('🔵 Raw user data from localStorage:', userString)
@@ -1207,9 +1234,22 @@ onMounted(async () => {
       console.log('🔵 User ID found, setting currentUserId:', u.id)
       currentUserId.value = u.id
       currentUser.value = u
+      
+      // Initialize dates to today - this should be respected
+      selectedDate.value = today
+      chartsDate.value = today
+      sessionsDate.value = today
+      console.log('🔵 Initialized dates to today:', today)
+      
       await load()
-      await loadCharts() // Load sessions and breaks data
       await loadUserSchedules() // Load user schedules for alerts
+      
+      // Wait for DOM to ensure canvas elements are ready
+      await nextTick()
+      await loadCharts() // Load sessions and breaks data with charts
+      
+      // Set up periodic check for day changes (every 5 minutes)
+      dayCheckTimer = setInterval(checkAndUpdateToToday, 5 * 60 * 1000)
     } else {
       console.log('🔴 No user ID found in localStorage')
       error.value = 'User not authenticated. Please log in again.';
@@ -1227,6 +1267,7 @@ onMounted(async () => {
 onUnmounted(() => {
   if (timer) clearInterval(timer)
   if (clockOutAlertTimer) clearTimeout(clockOutAlertTimer)
+  if (dayCheckTimer) clearInterval(dayCheckTimer)
 })
 </script>
 

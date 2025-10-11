@@ -3,6 +3,7 @@ defmodule ChronoPulseWeb.Router do
 
   pipeline :api do
     plug :accepts, ["json"]
+    plug ChronoPulseWeb.Plugs.Auth
   end
 
   scope "/api", ChronoPulseWeb do
@@ -34,6 +35,9 @@ defmodule ChronoPulseWeb.Router do
     # Time Management Features
     resources "/attendance", AttendanceController, except: [:new, :edit]
     resources "/leave_requests", LeaveRequestController, except: [:new, :edit]
+    get "/leave_requests/user/:user_id", LeaveRequestController, :user_requests
+    post "/leave_requests/:id/approve", LeaveRequestController, :approve
+    post "/leave_requests/:id/reject", LeaveRequestController, :reject
     resources "/overtime_requests", OvertimeRequestController, except: [:new, :edit]
     
     # User schedules

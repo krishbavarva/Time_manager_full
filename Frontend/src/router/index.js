@@ -14,7 +14,6 @@ const TeamDataView = () => import('../views/TeamDataView.vue')
 const AdminTeamsView = () => import('../views/AdminTeamsView.vue')
 const AdminDashboard = () => import('../views/AdminDashboard.vue')
 const ManagerTeamView = () => import('../views/ManagerTeamView.vue')
-const LeaveManagementView = () => import('../views/LeaveManagementView.vue')
 const OvertimeManagementView = () => import('../views/OvertimeManagementView.vue')
 const WeeklyTimesheetView = () => import('../views/WeeklyTimesheetView.vue')
 const UserScheduleView = () => import('../views/UserScheduleView.vue')
@@ -24,6 +23,8 @@ const AdminAttendanceView = () => import('../views/AdminAttendanceView.vue')
 const AdminSalaryView = () => import('../views/AdminSalaryView.vue')
 const AdminComplaintsView = () => import('../views/AdminComplaintsView.vue')
 const MyComplaintsView = () => import('../views/MyComplaintsView.vue')
+const MyLeaveRequestsView = () => import('../views/MyLeaveRequestsView.vue')
+const AdminLeaveRequestsView = () => import('../views/AdminLeaveRequestsView.vue')
 const WorkSessionView = () => import('../views/WorkSessionView.vue')
 const NotFound = () => import('../views/NotFound.vue')
 
@@ -41,7 +42,6 @@ const routes = [
   { path: '/manager/team', name: 'manager-team', component: ManagerTeamView },
   { path: '/teams/:id', name: 'team-detail', component: TeamDetailView },
   { path: '/teams/:id/data', name: 'team-data', component: TeamDataView },
-  { path: '/leave-management', name: 'leave-management', component: LeaveManagementView },
   { path: '/overtime-management', name: 'overtime-management', component: OvertimeManagementView },
   { path: '/weekly-timesheet', name: 'weekly-timesheet', component: WeeklyTimesheetView },
   { path: '/user-schedule', name: 'user-schedule', component: UserScheduleView },
@@ -50,7 +50,9 @@ const routes = [
   { path: '/admin/attendance', name: 'admin-attendance', component: AdminAttendanceView },
   { path: '/admin/salary', name: 'admin-salary', component: AdminSalaryView },
   { path: '/admin/complaints', name: 'admin-complaints', component: AdminComplaintsView },
+  { path: '/admin/leave-requests', name: 'admin-leave-requests', component: AdminLeaveRequestsView },
   { path: '/my-complaints', name: 'my-complaints', component: MyComplaintsView },
+  { path: '/my-leave-requests', name: 'my-leave-requests', component: MyLeaveRequestsView },
   { path: '/work-session', name: 'work-session', component: WorkSessionView },
   { path: '/users', redirect: '/admin/users' },
   { path: '/signup', redirect: '/admin/users' },
