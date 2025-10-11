@@ -44,8 +44,25 @@
               <option value="">All Status</option>
               <option value="present">Present</option>
               <option value="absent">Absent</option>
+              <option value="pending">Pending</option>
               <option value="on_leave">On Leave</option>
             </select>
+          </div>
+          
+          <!-- View Toggle -->
+          <div class="flex items-center gap-2 ml-auto">
+            <button 
+              @click="viewMode = 'today'"
+              :class="viewMode === 'today' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'"
+              class="px-4 py-2 rounded-lg font-medium transition-colors">
+              Today's Status
+            </button>
+            <button 
+              @click="viewMode = 'history'"
+              :class="viewMode === 'history' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'"
+              class="px-4 py-2 rounded-lg font-medium transition-colors">
+              History
+            </button>
           </div>
 
           <!-- Refresh Button -->
@@ -96,7 +113,7 @@
               </svg>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">On Leave</p>
+              <p class="text-sm font-medium text-gray-600">{{ viewMode === 'today' ? 'Pending' : 'On Leave' }}</p>
               <p class="text-2xl font-bold text-gray-900">{{ stats.onLeave }}</p>
             </div>
           </div>
@@ -117,8 +134,76 @@
         </div>
       </div>
 
-      <!-- Attendance Table -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+      <!-- Today's Attendance Status -->
+      <div v-if="viewMode === 'today'" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900">Today's Attendance Status</h3>
+          <p class="text-sm text-gray-600">{{ todayAttendanceList.length }} employees/managers</p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Time</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Marked At</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              <tr v-for="user in todayAttendanceList" :key="user.id" class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="flex items-center">
+                    <div class="flex-shrink-0 h-10 w-10">
+                      <div class="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                        <span class="text-sm font-medium text-white">{{ getUserInitials(user.name) }}</span>
+                      </div>
+                    </div>
+                    <div class="ml-4">
+                      <div class="text-sm font-medium text-gray-900">{{ user.name }}</div>
+                      <div class="text-sm text-gray-500">{{ user.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                        :class="getRoleClass(user.role)">
+                    {{ user.role }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ user.startTime || 'Not Set' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full"
+                        :class="getTodayStatusClass(user.todayStatus)">
+                    {{ getTodayStatusLabel(user.todayStatus) }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {{ user.markedAt || '-' }}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button 
+                    v-if="user.todayStatus === 'pending'"
+                    @click="markAsAbsent(user)"
+                    :disabled="markingAbsent[user.id]"
+                    class="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 text-xs">
+                    {{ markingAbsent[user.id] ? 'Marking...' : 'Mark Absent' }}
+                  </button>
+                  <span v-else class="text-gray-400 text-xs">No action needed</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Attendance Table (History) -->
+      <div v-else class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
           <h3 class="text-lg font-semibold text-gray-900">Attendance Records</h3>
           <p class="text-sm text-gray-600">{{ filteredAttendance.length }} records found</p>
@@ -276,6 +361,8 @@ import { ref, computed, onMounted } from 'vue'
 import { attendanceApi } from '../api/attendance'
 import { usersApi } from '../api/users'
 import { clockinsApi } from '../api/clockins'
+import { userSchedulesApi } from '../api/userSchedules'
+import { notificationService } from '../services/notificationService'
 import LoadingSpinner from '../components/LoadingSpinner.vue'
 
 const loading = ref(true)
@@ -288,6 +375,13 @@ const selectedMonth = ref(new Date().getMonth())
 const selectedYear = ref(new Date().getFullYear())
 const selectedUserId = ref('')
 const selectedStatus = ref('')
+
+// View mode
+const viewMode = ref('today') // 'today' or 'history'
+
+// Today's attendance
+const todayAttendanceList = ref([])
+const markingAbsent = ref({})
 
 // Pagination
 const currentPage = ref(1)
@@ -353,13 +447,26 @@ const visiblePages = computed(() => {
 })
 
 const stats = computed(() => {
-  const present = filteredAttendance.value.filter(a => a.status === 'present').length
-  const absent = filteredAttendance.value.filter(a => a.status === 'absent').length
-  const onLeave = filteredAttendance.value.filter(a => a.status === 'on_leave').length
-  const total = present + absent
-  const attendanceRate = total > 0 ? Math.round((present / total) * 100) : 0
-  
-  return { present, absent, onLeave, attendanceRate }
+  if (viewMode.value === 'today') {
+    // Today's stats
+    const present = todayAttendanceList.value.filter(u => u.todayStatus === 'present').length
+    const absent = todayAttendanceList.value.filter(u => u.todayStatus === 'absent').length
+    const pending = todayAttendanceList.value.filter(u => u.todayStatus === 'pending').length
+    const notMarked = todayAttendanceList.value.filter(u => u.todayStatus === 'not_marked').length
+    const total = todayAttendanceList.value.length
+    const attendanceRate = total > 0 ? Math.round((present / total) * 100) : 0
+    
+    return { present, absent, onLeave: pending, attendanceRate }
+  } else {
+    // History stats
+    const present = filteredAttendance.value.filter(a => a.status === 'present').length
+    const absent = filteredAttendance.value.filter(a => a.status === 'absent').length
+    const onLeave = filteredAttendance.value.filter(a => a.status === 'on_leave').length
+    const total = present + absent
+    const attendanceRate = total > 0 ? Math.round((present / total) * 100) : 0
+    
+    return { present, absent, onLeave, attendanceRate }
+  }
 })
 
 const getUserInitials = (name) => {
@@ -549,7 +656,149 @@ const nextPage = () => {
   }
 }
 
+// Load today's attendance status with pending logic
+const loadTodayAttendance = async () => {
+  try {
+    // Load all users (employees and managers only, exclude admin)
+    const usersResponse = await usersApi.list()
+    const allUsers = (usersResponse.data || []).filter(u => u.role !== 'admin')
+    
+    const today = new Date().toISOString().split('T')[0]
+    const now = new Date()
+    const currentTime = now.getHours() * 60 + now.getMinutes() // Current time in minutes
+    
+    // Load today's attendance records
+    const attendanceResponse = await attendanceApi.list()
+    const todayAttendanceRecords = (attendanceResponse.data || []).filter(a => a.date === today)
+    
+    // Build today's attendance list
+    const attendanceList = await Promise.all(allUsers.map(async (user) => {
+      // Get user's schedule for today
+      const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+      const dayName = dayNames[now.getDay()]
+      
+      let scheduleStartTime = '09:00' // Default
+      try {
+        const schedules = await userSchedulesApi.list(user.id)
+        const todaySchedule = schedules.data?.find(s => s.day_of_week === dayName)
+        if (todaySchedule && todaySchedule.start_time) {
+          scheduleStartTime = todaySchedule.start_time
+        }
+      } catch (error) {
+        console.error(`Error loading schedule for user ${user.id}:`, error)
+      }
+      
+      // Parse start time to minutes
+      const [startHour, startMinute] = scheduleStartTime.split(':').map(Number)
+      const startTimeMinutes = startHour * 60 + startMinute
+      const gracePeriodMinutes = startTimeMinutes + 30 // 30 minutes grace period
+      
+      // Check if user has marked attendance today
+      const userAttendance = todayAttendanceRecords.find(a => a.user_id === user.id)
+      
+      let todayStatus = 'pending'
+      let markedAt = null
+      
+      if (userAttendance) {
+        if (userAttendance.status === 'present') {
+          todayStatus = 'present'
+          markedAt = new Date(userAttendance.inserted_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        } else if (userAttendance.status === 'absent') {
+          todayStatus = 'absent'
+          markedAt = new Date(userAttendance.inserted_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        }
+      } else {
+        // No attendance record - check if it's past grace period
+        if (currentTime > gracePeriodMinutes) {
+          todayStatus = 'pending' // Past grace period, pending admin action
+        } else {
+          todayStatus = 'not_marked' // Within grace period
+        }
+      }
+      
+      return {
+        id: user.id,
+        name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || user.username || user.email,
+        email: user.email,
+        role: user.role,
+        startTime: scheduleStartTime,
+        todayStatus,
+        markedAt
+      }
+    }))
+    
+    todayAttendanceList.value = attendanceList
+  } catch (error) {
+    console.error('Error loading today attendance:', error)
+    notificationService.error('Failed to load today\'s attendance')
+  }
+}
+
+// Mark user as absent
+const markAsAbsent = async (user) => {
+  try {
+    markingAbsent.value[user.id] = true
+    
+    const today = new Date().toISOString().split('T')[0]
+    
+    // Create absent attendance record
+    await attendanceApi.create({
+      user_id: user.id,
+      date: today,
+      status: 'absent'
+    })
+    
+    notificationService.success(`Marked ${user.name} as absent`)
+    await loadTodayAttendance()
+    await loadAttendanceData()
+  } catch (error) {
+    console.error('Error marking absent:', error)
+    notificationService.error('Failed to mark as absent')
+  } finally {
+    markingAbsent.value[user.id] = false
+  }
+}
+
+// Helper functions for today's view
+const getTodayStatusClass = (status) => {
+  switch (status) {
+    case 'present':
+      return 'bg-green-100 text-green-800'
+    case 'absent':
+      return 'bg-red-100 text-red-800'
+    case 'pending':
+      return 'bg-yellow-100 text-yellow-800'
+    case 'not_marked':
+      return 'bg-gray-100 text-gray-800'
+    default:
+      return 'bg-gray-100 text-gray-800'
+  }
+}
+
+const getTodayStatusLabel = (status) => {
+  switch (status) {
+    case 'present':
+      return 'Present'
+    case 'absent':
+      return 'Absent'
+    case 'pending':
+      return 'Pending (Late)'
+    case 'not_marked':
+      return 'Not Marked Yet'
+    default:
+      return status
+  }
+}
+
 onMounted(() => {
   loadAttendanceData()
+  loadTodayAttendance()
+  
+  // Auto-refresh today's attendance every minute
+  setInterval(() => {
+    if (viewMode.value === 'today') {
+      loadTodayAttendance()
+    }
+  }, 60000)
 })
 </script>
