@@ -1,0 +1,14 @@
+# Nmap 7.94SVN scan initiated Sun Oct 12 01:24:57 2025 as: nmap -p 5432 -sV -oN step4_pgsql.txt 127.0.0.1
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.000097s latency).
+
+PORT     STATE SERVICE    VERSION
+5432/tcp open  postgresql PostgreSQL DB 9.6.0 or later
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-service :
+SF-Port5432-TCP:V=7.94SVN%I=7%D=10/12%Time=68EAE74F%P=x86_64-pc-linux-gnu%
+SF:r(SMBProgNeg,8C,"E\0\0\0\x8bSFATAL\0VFATAL\0C0A000\0Munsupported\x20fro
+SF:ntend\x20protocol\x2065363\.19778:\x20server\x20supports\x203\.0\x20to\
+SF:x203\.0\0Fpostmaster\.c\0L2200\0RProcessStartupPacket\0\0");
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Sun Oct 12 01:25:03 2025 -- 1 IP address (1 host up) scanned in 6.20 seconds

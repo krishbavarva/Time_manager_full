@@ -1,0 +1,1 @@
+# Nmap 7.94SVN scan initiated Sun Oct 12 01:13:39 2025 as: nmap -p 4000,8080,5432 -sV -T4 -oN step1_services.txt 127.0.0.1

@@ -1,0 +1,98 @@
+# Nmap 7.94SVN scan initiated Sun Oct 12 01:21:39 2025 as: nmap -p 4000,8080 --script=http-enum,http-robots.txt,http-headers,http-methods,http-security-headers -sV -T4 -oN step2_http.txt 127.0.0.1
+Nmap scan report for localhost (127.0.0.1)
+Host is up (0.000069s latency).
+
+Bug in http-security-headers: no string output.
+PORT     STATE SERVICE         VERSION
+4000/tcp open  remoteanything?
+| fingerprint-strings: 
+|   FourOhFourRequest: 
+|     HTTP/1.0 404 Not Found
+|     connection: close
+|     date: Sat, 11 Oct 2025 23:22:09 GMT
+|     content-length: 33
+|     vary: accept-encoding
+|     content-type: application/json; charset=utf-8
+|     cache-control: max-age=0, private, must-revalidate
+|     access-control-allow-credentials: true
+|     access-control-allow-origin: *
+|     access-control-expose-headers: 
+|     x-request-id: GG2TP4P0KFManPkAAKZR
+|     {"errors":{"detail":"Not Found"}}
+|   GenericLines, Help, Kerberos, NoMachine, RTSPRequest, SSLSessionReq, TLSSessionReq, TerminalServerCookie: 
+|     HTTP/1.0 400 Bad Request
+|     connection: close
+|   GetRequest: 
+|     HTTP/1.0 404 Not Found
+|     connection: close
+|     date: Sat, 11 Oct 2025 23:21:44 GMT
+|     content-length: 33
+|     vary: accept-encoding
+|     content-type: application/json; charset=utf-8
+|     cache-control: max-age=0, private, must-revalidate
+|     access-control-allow-credentials: true
+|     access-control-allow-origin: *
+|     access-control-expose-headers: 
+|     x-request-id: GG2TOauvbefD2ysAAKZB
+|     {"errors":{"detail":"Not Found"}}
+|   HTTPOptions: 
+|     HTTP/1.0 404 Not Found
+|     connection: close
+|     date: Sat, 11 Oct 2025 23:21:44 GMT
+|     content-length: 33
+|     vary: accept-encoding
+|     content-type: application/json; charset=utf-8
+|     cache-control: max-age=0, private, must-revalidate
+|     x-request-id: GG2TOa5-mGsxGzYAAHvC
+|_    {"errors":{"detail":"Not Found"}}
+8080/tcp open  http            nginx 1.29.2
+|_http-server-header: nginx/1.29.2
+| http-methods: 
+|_  Supported Methods: GET HEAD
+| http-headers: 
+|   Server: nginx/1.29.2
+|   Date: Sat, 11 Oct 2025 23:23:05 GMT
+|   Content-Type: text/html
+|   Content-Length: 445
+|   Last-Modified: Thu, 09 Oct 2025 18:46:13 GMT
+|   Connection: close
+|   ETag: "68e802f5-1bd"
+|   Accept-Ranges: bytes
+|   
+|_  (Request type: HEAD)
+1 service unrecognized despite returning data. If you know the service/version, please submit the following fingerprint at https://nmap.org/cgi-bin/submit.cgi?new-service :
+SF-Port4000-TCP:V=7.94SVN%I=7%D=10/12%Time=68EAE689%P=x86_64-pc-linux-gnu%
+SF:r(GetRequest,18E,"HTTP/1\.0\x20404\x20Not\x20Found\r\nconnection:\x20cl
+SF:ose\r\ndate:\x20Sat,\x2011\x20Oct\x202025\x2023:21:44\x20GMT\r\ncontent
+SF:-length:\x2033\r\nvary:\x20accept-encoding\r\ncontent-type:\x20applicat
+SF:ion/json;\x20charset=utf-8\r\ncache-control:\x20max-age=0,\x20private,\
+SF:x20must-revalidate\r\naccess-control-allow-credentials:\x20true\r\nacce
+SF:ss-control-allow-origin:\x20\*\r\naccess-control-expose-headers:\x20\r\
+SF:nx-request-id:\x20GG2TOauvbefD2ysAAKZB\r\n\r\n{\"errors\":{\"detail\":\
+SF:"Not\x20Found\"}}")%r(NoMachine,2F,"HTTP/1\.0\x20400\x20Bad\x20Request\
+SF:r\nconnection:\x20close\r\n\r\n")%r(GenericLines,2F,"HTTP/1\.0\x20400\x
+SF:20Bad\x20Request\r\nconnection:\x20close\r\n\r\n")%r(HTTPOptions,125,"H
+SF:TTP/1\.0\x20404\x20Not\x20Found\r\nconnection:\x20close\r\ndate:\x20Sat
+SF:,\x2011\x20Oct\x202025\x2023:21:44\x20GMT\r\ncontent-length:\x2033\r\nv
+SF:ary:\x20accept-encoding\r\ncontent-type:\x20application/json;\x20charse
+SF:t=utf-8\r\ncache-control:\x20max-age=0,\x20private,\x20must-revalidate\
+SF:r\nx-request-id:\x20GG2TOa5-mGsxGzYAAHvC\r\n\r\n{\"errors\":{\"detail\"
+SF::\"Not\x20Found\"}}")%r(RTSPRequest,2F,"HTTP/1\.0\x20400\x20Bad\x20Requ
+SF:est\r\nconnection:\x20close\r\n\r\n")%r(Help,2F,"HTTP/1\.0\x20400\x20Ba
+SF:d\x20Request\r\nconnection:\x20close\r\n\r\n")%r(SSLSessionReq,2F,"HTTP
+SF:/1\.0\x20400\x20Bad\x20Request\r\nconnection:\x20close\r\n\r\n")%r(Term
+SF:inalServerCookie,2F,"HTTP/1\.0\x20400\x20Bad\x20Request\r\nconnection:\
+SF:x20close\r\n\r\n")%r(TLSSessionReq,2F,"HTTP/1\.0\x20400\x20Bad\x20Reque
+SF:st\r\nconnection:\x20close\r\n\r\n")%r(Kerberos,2F,"HTTP/1\.0\x20400\x2
+SF:0Bad\x20Request\r\nconnection:\x20close\r\n\r\n")%r(FourOhFourRequest,1
+SF:8E,"HTTP/1\.0\x20404\x20Not\x20Found\r\nconnection:\x20close\r\ndate:\x
+SF:20Sat,\x2011\x20Oct\x202025\x2023:22:09\x20GMT\r\ncontent-length:\x2033
+SF:\r\nvary:\x20accept-encoding\r\ncontent-type:\x20application/json;\x20c
+SF:harset=utf-8\r\ncache-control:\x20max-age=0,\x20private,\x20must-revali
+SF:date\r\naccess-control-allow-credentials:\x20true\r\naccess-control-all
+SF:ow-origin:\x20\*\r\naccess-control-expose-headers:\x20\r\nx-request-id:
+SF:\x20GG2TP4P0KFManPkAAKZR\r\n\r\n{\"errors\":{\"detail\":\"Not\x20Found\
+SF:"}}");
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+# Nmap done at Sun Oct 12 01:23:06 2025 -- 1 IP address (1 host up) scanned in 87.55 seconds
