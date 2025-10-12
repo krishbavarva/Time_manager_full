@@ -1,113 +1,164 @@
 <template>
-  <div class="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+  <div class="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
     <!-- Loading State -->
     <LoadingSpinner v-if="loading" :show="loading" text="Loading dashboard data..." size="xl" containerClass="min-h-screen" />
     
-    <div v-else class="max-w-7xl mx-auto">
-      <!-- Page Header -->
-      <div class="mb-8">
-        <div class="flex items-center justify-between">
-          <div>
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-            <p class="text-gray-600">
-              Welcome back, <span class="font-semibold">{{ user?.username || `${user?.first_name} ${user?.last_name}` }}</span>
-              <span 
-                class="ml-2 px-2 py-1 text-xs font-medium rounded-full"
+    <div v-else class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Modern Page Header - Responsive -->
+      <div class="mb-8 sm:mb-12">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+          <div class="space-y-2">
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+              Dashboard
+            </h1>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
+              <p class="text-gray-600 text-sm sm:text-base lg:text-lg">
+                Welcome back, 
+                <span class="font-semibold text-gray-900">
+                  {{ user?.username || `${user?.first_name} ${user?.last_name}` }}
+                </span>
+              </p>
+              <div 
+                class="px-3 py-1 text-xs sm:text-sm font-medium rounded-full shadow-sm w-fit"
                 :class="{
-                  'bg-purple-100 text-purple-800': userRole === 'admin',
-                  'bg-blue-100 text-blue-800': userRole === 'manager',
-                  'bg-green-100 text-green-800': userRole === 'employee'
+                  'bg-gradient-to-r from-purple-500 to-purple-600 text-white': userRole === 'admin',
+                  'bg-gradient-to-r from-blue-500 to-blue-600 text-white': userRole === 'manager',
+                  'bg-gradient-to-r from-green-500 to-green-600 text-white': userRole === 'employee'
                 }"
               >
                 {{ userRole?.toUpperCase() }}
-              </span>
-            </p>
+              </div>
+            </div>
           </div>
-          <div class="flex items-center space-x-4">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             <button
               @click="refreshData"
-              class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
+              class="group px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white text-sm font-semibold rounded-xl hover:from-blue-600 hover:to-blue-700 transform hover:-translate-y-1 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              🔄 Refresh
+              <svg class="w-4 h-4 inline mr-2 group-hover:rotate-180 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+              </svg>
+              Refresh
             </button>
             <button
               @click="exportReport"
-              class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700"
+              class="group px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-sm font-semibold rounded-xl hover:from-emerald-600 hover:to-emerald-700 transform hover:-translate-y-1 transition-all duration-200 shadow-lg hover:shadow-xl"
             >
-              📊 Export Report
+              <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+              <span class="hidden sm:inline">Export Report</span>
+              <span class="sm:hidden">Export</span>
             </button>
           </div>
         </div>
       </div>
 
-      <!-- Key Metrics -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div class="flex items-center">
-            <div class="p-3 bg-blue-100 rounded-lg">
-              <span class="text-2xl">⏰</span>
+      <!-- Beautiful Key Metrics Cards - Responsive -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 mb-8 sm:mb-12">
+        <!-- Total Work Time Card -->
+        <div class="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+              <div class="p-4 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <div class="text-right">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Today</p>
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              </div>
             </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Total Work Time</p>
-              <p class="text-2xl font-bold text-gray-900">{{ formatActivityTime(totalWorkMin) }}</p>
-              <p class="text-xs text-green-600">Today</p>
-            </div>
+            <h3 class="text-sm font-semibold text-gray-600 mb-2">Total Work Time</h3>
+            <p class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">{{ formatActivityTime(totalWorkMin) }}</p>
           </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div class="flex items-center">
-            <div class="p-3 bg-yellow-100 rounded-lg">
-              <span class="text-2xl">☕</span>
+        <!-- Break Time Card -->
+        <div class="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-amber-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+              <div class="p-4 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl shadow-lg">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
+                </svg>
+              </div>
+              <div class="text-right">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Today</p>
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              </div>
             </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Break Time</p>
-              <p class="text-2xl font-bold text-gray-900">{{ formatActivityTime(totalBreakMin) }}</p>
-              <p class="text-xs text-yellow-600">Today</p>
-            </div>
+            <h3 class="text-sm font-semibold text-gray-600 mb-2">Break Time</h3>
+            <p class="text-3xl font-bold bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">{{ formatActivityTime(totalBreakMin) }}</p>
           </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div class="flex items-center">
-            <div class="p-3 bg-green-100 rounded-lg">
-              <span class="text-2xl">📊</span>
+        <!-- Sessions Card -->
+        <div class="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+              <div class="p-4 bg-gradient-to-br from-emerald-500 to-green-500 rounded-2xl shadow-lg">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+              </div>
+              <div class="text-right">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Today</p>
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              </div>
             </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Sessions</p>
-              <p class="text-2xl font-bold text-gray-900">{{ allSessions.length }}</p>
-              <p class="text-xs text-blue-600">This week</p>
-            </div>
+            <h3 class="text-sm font-semibold text-gray-600 mb-2">Sessions</h3>
+            <p class="text-3xl font-bold bg-gradient-to-r from-emerald-600 to-green-600 bg-clip-text text-transparent">{{ allSessions.length }}</p>
           </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-          <div class="flex items-center">
-            <div class="p-3 bg-purple-100 rounded-lg">
-              <span class="text-2xl">🎯</span>
+        <!-- Productivity Card -->
+        <div class="group bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8 hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-pink-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+          <div class="relative z-10">
+            <div class="flex items-center justify-between mb-4">
+              <div class="p-4 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl shadow-lg">
+                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              <div class="text-right">
+                <p class="text-xs font-medium text-gray-500 uppercase tracking-wider">Today</p>
+                <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+              </div>
             </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-500">Productivity</p>
-              <p class="text-2xl font-bold text-gray-900">{{ displayProductivityScore }}%</p>
-              <p class="text-xs text-purple-600">This week</p>
-            </div>
+            <h3 class="text-sm font-semibold text-gray-600 mb-2">Productivity</h3>
+            <p class="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{{ displayProductivityScore }}%</p>
           </div>
         </div>
       </div>
 
       <!-- Main Content Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
         <!-- Real-Time Status -->
         <div class="lg:col-span-1">
-          <RealTimeStatus />
+          <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-6 hover:shadow-2xl transition-all duration-300">
+            <RealTimeStatus />
+          </div>
         </div>
 
-        <!-- Quick Actions -->
+        <!-- Quick Actions - Responsive -->
         <div class="lg:col-span-2">
-          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 p-4 sm:p-6 lg:p-8 hover:shadow-2xl transition-all duration-300">
+            <div class="flex items-center mb-4 sm:mb-6">
+              <div class="p-2 sm:p-3 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg mr-3 sm:mr-4">
+                <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+              </div>
+              <h3 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">Quick Actions</h3>
+            </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <!-- Employee Actions - Hidden for Admin -->
               <!-- Mark Attendance Button with Timer -->
               <div
@@ -294,16 +345,28 @@
         <!-- Work Hours Chart -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">Work Hours This Week</h3>
-          <div class="h-64">
-            <canvas ref="workHoursChart"></canvas>
+          <div class="h-64 relative">
+            <canvas ref="workHoursChart" class="w-full h-full"></canvas>
+            <div v-if="!workHoursChart" class="absolute inset-0 flex items-center justify-center text-gray-500">
+              <div class="text-center">
+                <div class="text-4xl mb-2">📊</div>
+                <div class="text-sm">Loading chart...</div>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- Productivity Chart -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
           <h3 class="text-lg font-semibold text-gray-900 mb-4">Productivity Trends</h3>
-          <div class="h-64">
-            <canvas ref="productivityChart"></canvas>
+          <div class="h-64 relative">
+            <canvas ref="productivityChart" class="w-full h-full"></canvas>
+            <div v-if="!productivityChart" class="absolute inset-0 flex items-center justify-center text-gray-500">
+              <div class="text-center">
+                <div class="text-4xl mb-2">📈</div>
+                <div class="text-sm">Loading chart...</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -354,7 +417,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { usersApi } from '../api/users'
 import { workingTimesApi } from '../api/workingTimes'
@@ -518,9 +581,10 @@ const formatTimer = (seconds) => {
 }
 
 // Lifecycle
-onMounted(() => {
+onMounted(async () => {
   loadUser()
-  loadDashboardData()
+  await loadDashboardData()
+  await nextTick() // Ensure DOM is ready
   initializeCharts()
   startLiveUpdates()
   loadScheduledHours()
@@ -573,8 +637,26 @@ const loadDashboardData = async () => {
 }
 
 const calculateTotals = (workingTimes, clockins) => {
-  // Calculate work and break time from working times
-  totalWorkMin.value = workingTimes.reduce((total, wt) => {
+  // Get today's date
+  const today = new Date()
+  const todayStr = today.toISOString().split('T')[0] // YYYY-MM-DD format
+  
+  // Filter working times to only include today's data
+  const todayWorkingTimes = workingTimes.filter(wt => {
+    if (!wt.start) return false
+    const workDate = new Date(wt.start).toISOString().split('T')[0]
+    return workDate === todayStr
+  })
+  
+  // Filter clockins to only include today's data for sessions count
+  const todayClockins = clockins.filter(clockin => {
+    if (!clockin.time) return false
+    const clockinDate = new Date(clockin.time).toISOString().split('T')[0]
+    return clockinDate === todayStr
+  })
+  
+  // Calculate work time only from today's working times
+  totalWorkMin.value = todayWorkingTimes.reduce((total, wt) => {
     if (wt.start && wt.end) {
       const start = new Date(wt.start)
       const end = new Date(wt.end)
@@ -584,12 +666,44 @@ const calculateTotals = (workingTimes, clockins) => {
     return total
   }, 0)
   
-  // Calculate break time (simplified)
+  // Calculate break time (simplified) - only for today
   totalBreakMin.value = Math.max(0, totalWorkMin.value * 0.1) // 10% of work time as break
   
-  // Calculate productivity score
+  // Calculate today's sessions (clock in/out pairs)
+  const todaySessions = []
+  let currentSession = null
+  
+  todayClockins.forEach(clockin => {
+    if (clockin.status === true) { // Clock in
+      currentSession = { start: clockin.time, end: null }
+    } else if (clockin.status === false && currentSession) { // Clock out
+      currentSession.end = clockin.time
+      todaySessions.push(currentSession)
+      currentSession = null
+    }
+  })
+  
+  // If there's an open session (clocked in but not out), count it
+  if (currentSession) {
+    todaySessions.push(currentSession)
+  }
+  
+  allSessions.value = todaySessions
+  
+  // Calculate productivity score based on today's work
   const expectedWorkTime = 8 * 60 // 8 hours in minutes
   productivityScore.value = Math.min(100, Math.round((totalWorkMin.value / expectedWorkTime) * 100))
+  
+  // Debug logging
+  console.log('📊 Dashboard Time Calculation:')
+  console.log('Today:', todayStr)
+  console.log('Total working times:', workingTimes.length)
+  console.log('Today working times:', todayWorkingTimes.length)
+  console.log('Total clockins:', clockins.length)
+  console.log('Today clockins:', todayClockins.length)
+  console.log('Today sessions:', todaySessions.length)
+  console.log('Today work minutes:', totalWorkMin.value)
+  console.log('Today work hours:', (totalWorkMin.value / 60).toFixed(2))
 }
 
 const loadRecentActivities = async () => {
@@ -620,21 +734,41 @@ const formatTime = (dateString) => {
 }
 
 const initializeCharts = () => {
+  console.log('Initializing charts...')
+  
   // Work Hours Chart
   if (workHoursChart.value) {
-    const ctx = workHoursChart.value.getContext('2d')
-    workHoursChartInstance = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
-        datasets: [{
-          label: 'Work Hours',
-          data: [8, 7.5, 8.5, 8, 7, 0, 0],
-          backgroundColor: 'rgba(59, 130, 246, 0.8)',
-          borderColor: 'rgb(59, 130, 246)',
-          borderWidth: 1
-        }]
-      },
+    console.log('Creating work hours chart...')
+    try {
+      const ctx = workHoursChart.value.getContext('2d')
+      
+      // Destroy existing chart if it exists
+      if (workHoursChartInstance) {
+        workHoursChartInstance.destroy()
+      }
+      
+      workHoursChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+          datasets: [{
+            label: 'Work Hours',
+            data: [8, 7.5, 8.5, 8, 7, 0, 0],
+            backgroundColor: [
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(59, 130, 246, 0.8)',
+              'rgba(156, 163, 175, 0.5)',
+              'rgba(156, 163, 175, 0.5)'
+            ],
+            borderColor: 'rgb(59, 130, 246)',
+            borderWidth: 2,
+            borderRadius: 6,
+            borderSkipped: false
+          }]
+        },
       options: {
         responsive: true,
         maintainAspectRatio: false,
@@ -654,12 +788,26 @@ const initializeCharts = () => {
         }
       }
     })
+      console.log('Work hours chart created successfully')
+    } catch (error) {
+      console.error('Error creating work hours chart:', error)
+    }
+  } else {
+    console.log('Work hours chart canvas not found')
   }
 
   // Productivity Chart
   if (productivityChart.value) {
-    const ctx = productivityChart.value.getContext('2d')
-    productivityChartInstance = new Chart(ctx, {
+    console.log('Creating productivity chart...')
+    try {
+      const ctx = productivityChart.value.getContext('2d')
+      
+      // Destroy existing chart if it exists
+      if (productivityChartInstance) {
+        productivityChartInstance.destroy()
+      }
+      
+      productivityChartInstance = new Chart(ctx, {
       type: 'line',
       data: {
         labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
@@ -668,6 +816,11 @@ const initializeCharts = () => {
           data: [85, 87, 90, 87],
           borderColor: 'rgb(16, 185, 129)',
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderWidth: 3,
+          pointBackgroundColor: 'rgb(16, 185, 129)',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 6,
           tension: 0.4,
           fill: true
         }]
@@ -692,6 +845,12 @@ const initializeCharts = () => {
         }
       }
     })
+      console.log('Productivity chart created successfully')
+    } catch (error) {
+      console.error('Error creating productivity chart:', error)
+    }
+  } else {
+    console.log('Productivity chart canvas not found')
   }
 }
 
@@ -703,8 +862,10 @@ const startLiveUpdates = () => {
   }, 10000)
 }
 
-const refreshData = () => {
-  loadDashboardData()
+const refreshData = async () => {
+  await loadDashboardData()
+  await nextTick() // Ensure DOM is ready
+  initializeCharts() // Re-initialize charts
   notificationService.success('Dashboard data refreshed')
 }
 
