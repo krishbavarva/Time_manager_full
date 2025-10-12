@@ -29,11 +29,19 @@ jobs:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_KEY }}
-        port: ${{ secrets.SSH_PORT }}
+        # default port to 22 in case the secret is not set
+        port: ${{ secrets.SSH_PORT || '22' }}
         script: |
           set -euo pipefail
           cd /home/${{ secrets.SSH_USER }}/time_manager_full
-          # Ensure docker is running and pull any submodule changes
+          # Ensure docker is running
           sudo systemctl enable --now docker || true
-          sudo /usr/local/bin/docker-compose down || true
-          sudo /usr/local/bin/docker-compose up -d --build
+          # Prefer the docker compose plugin when available, fall back to the
+          # legacy docker-compose binary.
+          if sudo docker compose version >/dev/null 2>&1; then
+            sudo docker compose down || true
+            sudo docker compose up -d --build
+          else
+            sudo /usr/local/bin/docker-compose down || true
+            sudo /usr/local/bin/docker-compose up -d --build
+          fi
