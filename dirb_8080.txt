@@ -1,0 +1,38 @@
+
+-----------------
+DIRB v2.22    
+By The Dark Raver
+-----------------
+
+OUTPUT_FILE: dirb_8080.txt
+START_TIME: Sun Oct 12 01:07:40 2025
+URL_BASE: http://127.0.0.1:8080/
+WORDLIST_FILES: /usr/share/dirb/wordlists/common.txt
+
+-----------------
+
+GENERATED WORDS: 4612
+
+---- Scanning URL: http://127.0.0.1:8080/ ----
+==> DIRECTORY: http://127.0.0.1:8080/api/
+
+---- Entering directory: http://127.0.0.1:8080/api/ ----
+
+-----------------
+DIRB v2.22    
+By The Dark Raver
+-----------------
+
+OUTPUT_FILE: dirb_8080.txt
+START_TIME: Sun Oct 12 01:32:36 2025
+URL_BASE: http://127.0.0.1:8080/
+WORDLIST_FILES: /usr/share/dirb/wordlists/common.txt
+
+-----------------
+
+GENERATED WORDS: 4612
+
+---- Scanning URL: http://127.0.0.1:8080/ ----
+==> DIRECTORY: http://127.0.0.1:8080/api/
+
+---- Entering directory: http://127.0.0.1:8080/api/ ----

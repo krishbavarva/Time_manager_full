@@ -1,0 +1,44 @@
+
+-----------------
+DIRB v2.22    
+By The Dark Raver
+-----------------
+
+OUTPUT_FILE: dirb_4000.txt
+START_TIME: Sun Oct 12 01:07:28 2025
+URL_BASE: http://127.0.0.1:4000/
+WORDLIST_FILES: /usr/share/dirb/wordlists/common.txt
+
+-----------------
+
+GENERATED WORDS: 4612
+
+---- Scanning URL: http://127.0.0.1:4000/ ----
++ http://127.0.0.1:4000/favicon.ico (CODE:200|SIZE:152)
++ http://127.0.0.1:4000/robots.txt (CODE:200|SIZE:203)
+
+-----------------
+END_TIME: Sun Oct 12 01:07:31 2025
+DOWNLOADED: 4612 - FOUND: 2
+
+-----------------
+DIRB v2.22    
+By The Dark Raver
+-----------------
+
+OUTPUT_FILE: dirb_4000.txt
+START_TIME: Sun Oct 12 01:24:26 2025
+URL_BASE: http://127.0.0.1:4000/
+WORDLIST_FILES: /usr/share/dirb/wordlists/common.txt
+
+-----------------
+
+GENERATED WORDS: 4612
+
+---- Scanning URL: http://127.0.0.1:4000/ ----
++ http://127.0.0.1:4000/favicon.ico (CODE:200|SIZE:152)
++ http://127.0.0.1:4000/robots.txt (CODE:200|SIZE:203)
+
+-----------------
+END_TIME: Sun Oct 12 01:24:30 2025
+DOWNLOADED: 4612 - FOUND: 2
