@@ -293,43 +293,74 @@ const getLocation = async () => {
   // Try browser geolocation first
   if (navigator.geolocation) {
     try {
+      console.log('🌍 Requesting browser geolocation...')
       const position = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 5000,
-          maximumAge: 0
-        })
+        navigator.geolocation.getCurrentPosition(
+          (pos) => {
+            console.log('✅ Browser geolocation successful:', pos.coords)
+            resolve(pos)
+          },
+          (err) => {
+            console.warn('❌ Browser geolocation error:', err.message)
+            if (err.code === 1) {
+              console.warn('User denied geolocation permission')
+            } else if (err.code === 2) {
+              console.warn('Position unavailable')
+            } else if (err.code === 3) {
+              console.warn('Geolocation timeout')
+            }
+            reject(err)
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          }
+        )
       })
       
       return {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
         source: 'browser_geolocation'
       }
     } catch (error) {
-      console.warn('Browser geolocation failed, trying IP-based fallback', error)
+      console.warn('⚠️ Browser geolocation failed, trying IP-based fallback', error.message)
     }
+  } else {
+    console.warn('⚠️ Navigator.geolocation not available in this browser')
   }
   
   // Fallback to IP-based geolocation
   try {
+    console.log('🌐 Trying IP-based geolocation...')
     const response = await fetch('https://ipapi.co/json/')
     if (response.ok) {
       const data = await response.json()
+      console.log('📍 IP geolocation response:', data)
       if (data.latitude && data.longitude) {
         return {
           latitude: parseFloat(data.latitude),
           longitude: parseFloat(data.longitude),
+          city: data.city,
+          region: data.region,
+          country: data.country_name,
           source: 'ip_geolocation'
         }
       }
     }
   } catch (error) {
-    console.error('IP-based geolocation failed', error)
-    throw new Error('Could not determine your location. Please enable location access.')
+    console.error('❌ IP-based geolocation failed', error)
   }
   
-  throw new Error('Location services are not available')
+  // If all methods fail, return null location with warning
+  console.warn('⚠️ All location methods failed, proceeding without location')
+  return {
+    latitude: null,
+    longitude: null,
+    source: 'none'
+  }
 }
 
 const list = ref([])
@@ -940,19 +971,37 @@ const toggle = async () => {
   
   // Get location with fallback
   let location = { latitude: null, longitude: null }
+  let locationSource = 'none'
   
-  try {
-    const locationData = await getLocation()
-    location = {
-      latitude: locationData.latitude,
-      longitude: locationData.longitude
-    }
-    console.log('Location data from getLocation():', locationData)
-    console.log(`Using location from ${locationData.source}:`, location)
-  } catch (err) {
-    console.error('Error getting location:', err)
-    error.value = `Location error: ${err.message}. Using default location.`
-    // Continue with default (null) location
+  const locationData = await getLocation()
+  location = {
+    latitude: locationData.latitude,
+    longitude: locationData.longitude
+  }
+  locationSource = locationData.source
+  
+  console.log('📍 Location data from getLocation():', locationData)
+  console.log(`📍 Using location from ${locationData.source}:`, location)
+  
+  // Show location status to user
+  if (locationSource === 'browser_geolocation') {
+    console.log('✅ Using precise GPS location')
+  } else if (locationSource === 'ip_geolocation') {
+    console.log('⚠️ Using approximate location based on IP address')
+    error.value = 'Using approximate location (IP-based). For precise location, enable GPS in your browser.'
+    setTimeout(() => {
+      if (error.value.includes('approximate location')) {
+        error.value = ''
+      }
+    }, 5000)
+  } else {
+    console.log('❌ No location data available')
+    error.value = 'Location not available. Clock in/out will proceed without location data.'
+    setTimeout(() => {
+      if (error.value.includes('Location not available')) {
+        error.value = ''
+      }
+    }, 5000)
   }
   
   try {
