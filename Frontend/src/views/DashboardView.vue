@@ -211,6 +211,30 @@
                 </div>
               </button>
 
+              <button
+                v-if="!isAdmin"
+                @click="showComplaintForm = true"
+                class="flex items-center justify-center p-4 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+              >
+                <span class="text-2xl mr-3">📝</span>
+                <div class="text-left">
+                  <div class="font-medium text-gray-900">Submit Complaint</div>
+                  <div class="text-sm text-gray-500">Report an issue</div>
+                </div>
+              </button>
+
+              <button
+                v-if="!isAdmin"
+                @click="$router.push('/my-complaints')"
+                class="flex items-center justify-center p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
+              >
+                <span class="text-2xl mr-3">💬</span>
+                <div class="text-left">
+                  <div class="font-medium text-gray-900">My Complaints</div>
+                  <div class="text-sm text-gray-500">View responses</div>
+                </div>
+              </button>
+
               <!-- Manager Actions -->
               <button
                 v-if="isManager"
@@ -323,6 +347,9 @@
         </div>
       </div>
     </div>
+
+    <!-- Complaint Form Modal -->
+    <ComplaintForm v-if="showComplaintForm" @close="showComplaintForm = false" @submitted="handleComplaintSubmitted" />
   </div>
 </template>
 
@@ -338,6 +365,7 @@ import { exportService } from '../services/exportService'
 import { notificationService } from '../services/notificationService'
 import RealTimeStatus from '../components/RealTimeStatus.vue'
 import LoadingSpinner from '../components/LoadingSpinner.vue'
+import ComplaintForm from '../components/ComplaintForm.vue'
 import Chart from 'chart.js/auto'
 
 const router = useRouter()
@@ -350,6 +378,9 @@ const totalWorkMin = ref(0)
 const totalBreakMin = ref(0)
 const productivityScore = ref(0)
 const recentActivities = ref([])
+
+// Complaint Form
+const showComplaintForm = ref(false)
 
 // Attendance Timer
 const attendanceMarked = ref(false)
@@ -435,12 +466,21 @@ const markAttendance = async () => {
       status: 'present'
     })
     
+    // Auto-trigger clock-in when marking attendance
+    try {
+      await clockinsApi.toggleForUser(user.value.id, true) // true = clock in
+      console.log('Auto clock-in triggered after marking attendance')
+    } catch (clockError) {
+      console.error('Error auto clocking in:', clockError)
+      // Don't fail the attendance marking if clock-in fails
+    }
+    
     attendanceMarked.value = true
     attendanceStartTime.value = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     remainingSeconds.value = scheduledHours.value * 3600 // Convert hours to seconds
     
     startTimer()
-    notificationService.success(`Attendance marked! Timer started for ${scheduledHours.value} hours`)
+    notificationService.success(`Attendance marked and clocked in! Timer started for ${scheduledHours.value} hours`)
   } catch (error) {
     console.error('Error marking attendance:', error)
     notificationService.error('Failed to mark attendance')
@@ -688,6 +728,11 @@ const exportReport = () => {
 const viewAllActivity = () => {
   // TODO: Navigate to activity page
   notificationService.info('Activity page will be implemented soon')
+}
+
+const handleComplaintSubmitted = () => {
+  notificationService.success('Your complaint has been submitted successfully!')
+  showComplaintForm.value = false
 }
 
 const formatActivityTime = (timestamp) => {

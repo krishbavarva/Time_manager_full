@@ -236,6 +236,17 @@
                       ✏️
                     </button>
                     <button
+                      v-if="currentUser.id !== user.id && user.role !== 'admin'"
+                      @click="toggleUserRole(user)"
+                      :class="[
+                        'font-bold hover:opacity-80 transition-opacity',
+                        user.role === 'manager' ? 'text-green-600' : 'text-purple-600'
+                      ]"
+                      :title="user.role === 'manager' ? 'Demote to Employee' : 'Promote to Manager'"
+                    >
+                      {{ user.role === 'manager' ? '⬇️' : '⬆️' }}
+                    </button>
+                    <button
                       v-if="currentUser.id !== user.id"
                       @click="confirmDelete(user)"
                       class="text-red-600 hover:text-red-800"
@@ -477,7 +488,7 @@
 
                 <!-- Permissions & Settings -->
                 <div class="bg-white border border-gray-200 rounded-lg p-4">
-                  <h4 class="font-medium text-gray-900 mb-4">Permissions</h4>
+                  <h4 class="font-medium text-gray-900 mb-4">Permissions & Salary</h4>
                   <div class="space-y-3">
                     <div class="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
                       <div class="flex-1">
@@ -496,6 +507,28 @@
                           :class="selectedUser.flexible_time_enabled ? 'translate-x-5' : 'translate-x-0'"
                         ></span>
                       </button>
+                    </div>
+                    
+                    <div class="p-3 bg-green-50 rounded-lg">
+                      <label class="font-medium text-gray-900 block mb-2">Hourly Rate (€)</label>
+                      <div class="flex items-center gap-2">
+                        <input
+                          v-model.number="editHourlyRate"
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="15.00"
+                        />
+                        <button
+                          @click="updateHourlyRate(selectedUser)"
+                          class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 text-sm">
+                          Update
+                        </button>
+                      </div>
+                      <p class="text-xs text-gray-600 mt-1">
+                        Current: €{{ selectedUser.hourly_rate || 15 }}/hour | Overtime: €{{ (selectedUser.hourly_rate || 15) * 2 }}/hour
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -623,6 +656,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { usersApi } from '../api/users'
 import { teamsApi } from '../api/teams'
+import { notificationService } from '../services/notificationService'
 
 // Reactive data
 const users = ref([])
@@ -635,6 +669,7 @@ const editingUser = ref(null)
 const selectedUser = ref(null)
 const showPassword = ref(false)
 const selectedDate = ref(new Date().toISOString().split('T')[0])
+const editHourlyRate = ref(15.0)
 const loadingUserData = ref(false)
 const userDetailedData = ref({
   totalHours: '0:00',
@@ -801,8 +836,35 @@ const editUser = (user) => {
 const viewUserDetails = async (user) => {
   console.log('View user details clicked:', user)
   selectedUser.value = user
+  editHourlyRate.value = user.hourly_rate || 15.0
   console.log('selectedUser set to:', selectedUser.value)
   await loadUserDetailedData()
+}
+
+const toggleUserRole = async (user) => {
+  const newRole = user.role === 'manager' ? 'employee' : 'manager'
+  const action = newRole === 'manager' ? 'promote' : 'demote'
+  const actionPastTense = newRole === 'manager' ? 'promoted' : 'demoted'
+  
+  if (confirm(`Are you sure you want to ${action} ${user.first_name} ${user.last_name} to ${newRole.toUpperCase()}?`)) {
+    try {
+      await usersApi.update(user.id, { role: newRole })
+      await loadUsers()
+      
+      // Show success notification
+      notificationService.success(
+        `Successfully ${actionPastTense} ${user.first_name} ${user.last_name} to ${newRole.toUpperCase()}`,
+        { title: 'Role Updated' }
+      )
+    } catch (err) {
+      error.value = `Failed to update user role`
+      notificationService.error(
+        `Failed to update role for ${user.first_name} ${user.last_name}`,
+        { title: 'Update Failed' }
+      )
+      console.error('Error updating user role:', err)
+    }
+  }
 }
 
 const confirmDelete = (user) => {
@@ -845,6 +907,33 @@ const toggleFlexibleTime = async (user) => {
   } catch (err) {
     console.error('Error toggling flexible time:', err)
     alert('Failed to update flexible time permission. Please try again.')
+  }
+}
+
+const updateHourlyRate = async (user) => {
+  try {
+    if (!editHourlyRate.value || editHourlyRate.value <= 0) {
+      notificationService.error('Please enter a valid hourly rate')
+      return
+    }
+    
+    // Update user via API
+    await usersApi.update(user.id, {
+      hourly_rate: editHourlyRate.value
+    })
+    
+    // Update local data
+    user.hourly_rate = editHourlyRate.value
+    selectedUser.value.hourly_rate = editHourlyRate.value
+    
+    // Reload users to ensure sync
+    await loadUsers()
+    
+    // Show notification
+    notificationService.success(`Hourly rate updated to €${editHourlyRate.value}/hour for ${user.first_name} ${user.last_name}`)
+  } catch (err) {
+    console.error('Error updating hourly rate:', err)
+    notificationService.error('Failed to update hourly rate')
   }
 }
 

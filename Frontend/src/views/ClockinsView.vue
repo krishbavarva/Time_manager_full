@@ -21,7 +21,7 @@
     <div class="mt-6 p-6 bg-white border border-gray-200 rounded-xl shadow-sm">
       <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
         <p class="text-sm text-blue-800 font-medium">📋 Official Attendance Tracking</p>
-        <p class="text-xs text-blue-700">This is for official clock in/out attendance. Independent from Work Session tracking.</p>
+        <p class="text-xs text-blue-700">This is for official clock in/out attendance. Includes early/late arrival alerts and automatic clock-out reminders.</p>
       </div>
       <h2 class="text-xl font-semibold text-gray-900 m-0 mb-4">Clock In/Out (Official Attendance)</h2>
       <div class="flex flex-wrap items-center gap-4 mb-6">
@@ -46,13 +46,20 @@
         >
           Today
         </button>
-        <button 
+                                                                                                                                                                                                                            <!-- <button 
+                                                                                                                                                                                                                              type="button" 
+                                                                                                                                                                                                                              @click="switchToDataDate" 
+                                                                                                                                                                                                                              class="px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 hover:border-blue-700"
+                                                                                                                                                                                                                            >
+                                                                                                                                                                                                                              Data Date
+                                                                                                                                                                                                                            </button> -->
+        <!-- <button 
           type="button" 
-          @click="switchToDataDate" 
-          class="px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer bg-blue-600 text-white border border-blue-600 hover:bg-blue-700 hover:border-blue-700"
+          @click="testEmail" 
+          class="px-4 py-2 rounded-lg font-medium transition-all duration-200 cursor-pointer bg-orange-600 text-white border border-orange-600 hover:bg-orange-700 hover:border-orange-700"
         >
-          Data Date
-        </button>
+          Test Email
+        </button> -->
         
         <div v-if="runningSince" class="ml-auto flex items-center gap-2 bg-gray-50 px-4 py-2 rounded-lg">
           <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse"></div>
@@ -273,10 +280,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import { clockinsApi } from '../api/clockins'
 import { chartsApi } from '../api/charts'
+import { userSchedulesApi } from '../api/userSchedules'
+import { sendEarlyArrivalNotification, sendForgotClockOutEmail } from '../services/emailService'
 import Chart from 'chart.js/auto'
 
 // Get location with fallback to IP-based geolocation
@@ -352,6 +361,12 @@ let sessionsChart = null
 const runningSince = ref(null)
 const liveSeconds = ref(0)
 let timer = null
+let clockOutAlertTimer = null
+let dayCheckTimer = null
+
+// User schedule and alert state
+const userSchedules = ref([])
+const currentUser = ref(null)
 
 // Get current date in YYYY-MM-DD format
 const getTodayDate = () => {
@@ -370,6 +385,121 @@ const todayFormatted = new Date().toLocaleDateString('en-US', {
   month: 'long', 
   day: 'numeric' 
 })
+
+// Helper function to get today's schedule
+const getTodaysSchedule = () => {
+  const now = new Date()
+  const dayOfWeek = now.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+  
+  return userSchedules.value.find(schedule => {
+    return schedule.day_of_week === dayOfWeek && schedule.is_active
+  })
+}
+
+// Helper function to create DateTime from time string
+const createDateTimeFromTime = (timeString) => {
+  const today = new Date()
+  const [hours, minutes, seconds] = timeString.split(':')
+  today.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds || 0), 0)
+  return today
+}
+
+// Helper function to check if clock in is early
+const checkEarlyArrival = (clockInTime, scheduledStartTime) => {
+  if (!scheduledStartTime) return false
+  
+  const clockIn = new Date(clockInTime)
+  const scheduled = createDateTimeFromTime(scheduledStartTime)
+  
+  // Check if clock in is more than 30 minutes early
+  const timeDiff = scheduled.getTime() - clockIn.getTime()
+  return timeDiff > 30 * 60 * 1000 // 30 minutes in milliseconds
+}
+
+// Helper function to check if clock in is late (after scheduled end time)
+const checkLateArrival = (clockInTime, scheduledEndTime) => {
+  if (!scheduledEndTime) return false
+  
+  const clockIn = new Date(clockInTime)
+  const scheduled = createDateTimeFromTime(scheduledEndTime)
+  
+  return clockIn.getTime() > scheduled.getTime()
+}
+
+// Helper function to show alert and get user reason
+const showAlertWithReason = (title, message, type = 'warning') => {
+  return new Promise((resolve) => {
+    const reason = prompt(`${title}\n\n${message}\n\nPlease provide a reason:`)
+    resolve(reason || 'No reason provided')
+  })
+}
+
+// Helper function to start clock out alert timer
+const startClockOutAlert = () => {
+  const schedule = getTodaysSchedule()
+  if (!schedule || !schedule.scheduled_end_time) return
+  
+  const scheduledEndTime = createDateTimeFromTime(schedule.scheduled_end_time)
+  const now = new Date()
+  const timeUntilEnd = scheduledEndTime.getTime() - now.getTime()
+  
+  console.log('🕐 Setting up clock out alert:', {
+    scheduledEnd: scheduledEndTime.toLocaleString(),
+    now: now.toLocaleString(),
+    timeUntilEnd: `${Math.floor(timeUntilEnd / 1000 / 60)} minutes`
+  })
+  
+  if (timeUntilEnd > 0) {
+    // Set timer to show alert at scheduled end time
+    clockOutAlertTimer = setTimeout(() => {
+      showClockOutAlert()
+    }, timeUntilEnd)
+  }
+}
+
+  // Helper function to show clock out alert
+  const showClockOutAlert = () => {
+    if (!isClockedIn.value || !currentUser.value) return
+    
+    const alertMessage = `Your scheduled work hours have ended. Please clock out now.`
+    
+    if (confirm(`${alertMessage}\n\nClick OK to clock out, or Cancel to continue working.`)) {
+      // User wants to clock out
+      toggle()
+    } else {
+      // User chose to continue working, send email AFTER alert response
+      console.log('📧 User ignored clock out alert - sending email after 1 minute...')
+      setTimeout(() => {
+        if (isClockedIn.value) {
+          console.log('📧 Sending forgot clock out email AFTER alert...')
+          sendForgotClockOutEmailNotification()
+        }
+      }, 60000) // 1 minute
+    }
+  }
+
+// Helper function to send forgot clock out email
+const sendForgotClockOutEmailNotification = async () => {
+  if (!currentUser.value || !currentClockInTime.value) return
+  
+  try {
+    console.log('📧 Preparing to send forgot clock out email...')
+    const schedule = getTodaysSchedule()
+    const clockInfo = {
+      clock_in_time: new Date(currentClockInTime.value).toLocaleTimeString(),
+      expected_clock_out: schedule?.scheduled_end_time || 'Not set',
+      current_time: new Date().toLocaleTimeString()
+    }
+    
+    console.log('📧 Clock info for email:', clockInfo)
+    console.log('📧 Sending to:', currentUser.value.email)
+    
+    await sendForgotClockOutEmail(currentUser.value, clockInfo)
+    console.log('✅ Forgot clock out email sent successfully')
+  } catch (error) {
+    console.error('❌ Failed to send forgot clock out email:', error)
+  }
+}
 const fmtIso = (iso) => {
   if (!iso) return '--'
   const d = new Date(iso)
@@ -461,7 +591,7 @@ const filterClockinsByDate = () => {
 const filterSessionsAndBreaks = () => {
   try {
     if (!sessionsDate.value) {
-      sessionsDate.value = '2025-10-08'; // Default to a date with data
+      sessionsDate.value = today; // Default to today
     }
     
     console.log('🔵 Filtering sessions/breaks for date:', sessionsDate.value)
@@ -583,13 +713,19 @@ const load = async () => {
         stopTimer()
       }
       
-      // If no date is selected or selected date has no data, switch to the date with the most recent data
+      // Only switch to most recent data date if no date is explicitly selected
+      // Don't override if user wants to view today's date
       const mostRecentDate = new Date(lastRecord.time).toISOString().split('T')[0]
-      if (!selectedDate.value || selectedDate.value === today) {
-        console.log('🔵 Switching to most recent data date:', mostRecentDate)
+      if (!selectedDate.value) {
+        console.log('🔵 No date selected, switching to most recent data date:', mostRecentDate)
         selectedDate.value = mostRecentDate
         chartsDate.value = mostRecentDate
         sessionsDate.value = mostRecentDate
+      } else {
+        // Keep the selected date but ensure charts and sessions use the same date
+        console.log('🔵 Using selected date:', selectedDate.value)
+        chartsDate.value = selectedDate.value
+        sessionsDate.value = selectedDate.value
       }
     } else {
       isClockedIn.value = false
@@ -611,13 +747,14 @@ const loadCharts = async () => {
     hoursRows.value = []; 
     breaks.value = []; 
     sessions.value = [];
+    await nextTick();
     updateCharts();
     return; 
   }
   
-  // If no date is selected, default to a date with data (2025-10-08)
+  // If no date is selected, use today's date
   if (!chartsDate.value) {
-    chartsDate.value = '2025-10-08'; // Use a date that has data
+    chartsDate.value = today;
   }
   
   
@@ -645,6 +782,9 @@ const loadCharts = async () => {
     
     // Update filtered sessions and breaks
     filterSessionsAndBreaks();
+    
+    // Wait for DOM to be ready before rendering charts
+    await nextTick();
     updateCharts();
   } catch (error) {
     console.error('Error loading charts data:', error);
@@ -653,6 +793,7 @@ const loadCharts = async () => {
     sessions.value = [];
     filteredSessions.value = [];
     filteredBreaks.value = [];
+    await nextTick();
     updateCharts();
   } finally {
     chartsLoading.value = false;
@@ -782,6 +923,7 @@ const updateCharts = () => {
 }
 
 const toggle = async () => {
+  console.log('🚀🚀🚀 TOGGLE FUNCTION CALLED - NEW VERSION WITH ALERTS! 🚀🚀🚀')
   console.log('🔵 Toggle function called')
   console.log('🔵 Creating state:', creating.value)
   console.log('🔵 Current user ID:', currentUserId.value)
@@ -874,16 +1016,121 @@ const toggle = async () => {
     
     // Handle timers and current clock in time
     if (newStatus) {
+      console.log('🟢 Clock In - Starting session')
       currentClockInTime.value = now
       startTimer(now)
+      
+      // Check for early/late arrival and show alerts
+      const schedule = getTodaysSchedule()
+      const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+      
+      console.log('🔍 Current day:', today)
+      console.log('🔍 All schedules:', userSchedules.value)
+      console.log('🔍 Schedule found for today:', schedule)
+      console.log('🔍 Current user:', currentUser.value)
+      
+      if (schedule && schedule.scheduled_start_time) {
+        console.log('✅ Schedule has start time:', schedule.scheduled_start_time)
+        
+        // Check for early arrival
+        const isEarly = checkEarlyArrival(now, schedule.scheduled_start_time)
+        console.log('🕐 Is early arrival?', isEarly)
+        
+        if (isEarly) {
+          const scheduledStart = createDateTimeFromTime(schedule.scheduled_start_time)
+          console.log('🌅 EARLY ARRIVAL DETECTED!')
+          
+          const reason = await showAlertWithReason(
+            '🌅 Early Arrival Detected',
+            `You're clocking in early today!\n\nScheduled start: ${scheduledStart.toLocaleTimeString()}\nActual start: ${new Date(now).toLocaleTimeString()}`
+          )
+          
+          console.log('📝 User reason:', reason)
+          
+          // Send early arrival email notification AFTER alert
+          console.log('📧 Sending early arrival email AFTER alert response...')
+          try {
+            const scheduledStartTime = createDateTimeFromTime(schedule.scheduled_start_time)
+            const arrivalInfo = {
+              scheduled_start: scheduledStartTime.toLocaleTimeString(),
+              actual_start: new Date(now).toLocaleTimeString(),
+              early_minutes: Math.floor((scheduledStartTime.getTime() - new Date(now).getTime()) / (1000 * 60)),
+              reason: reason
+            }
+            
+            console.log('📧 Email data:', arrivalInfo)
+            await sendEarlyArrivalNotification(currentUser.value, arrivalInfo)
+            console.log('✅ Early arrival email sent successfully AFTER alert')
+          } catch (error) {
+            console.error('❌ Failed to send early arrival email:', error)
+          }
+        }
+        
+        // Check for late arrival (after scheduled end time)
+        if (schedule.scheduled_end_time) {
+          const isLate = checkLateArrival(now, schedule.scheduled_end_time)
+          console.log('🕐 Is late arrival?', isLate)
+          
+          if (isLate) {
+            const scheduledEnd = createDateTimeFromTime(schedule.scheduled_end_time)
+            console.log('⚠️ LATE ARRIVAL DETECTED!')
+            
+            const reason = await showAlertWithReason(
+              '⚠️ Late Clock In',
+              `You're clocking in after your scheduled end time!\n\nScheduled end: ${scheduledEnd.toLocaleTimeString()}\nActual clock in: ${new Date(now).toLocaleTimeString()}`
+            )
+            console.log('📝 Late clock in reason:', reason)
+            
+            // Send late arrival email notification AFTER alert
+            console.log('📧 Sending late arrival email AFTER alert response...')
+            try {
+              const lateArrivalInfo = {
+                scheduled_end: scheduledEnd.toLocaleTimeString(),
+                actual_clock_in: new Date(now).toLocaleTimeString(),
+                reason: reason
+              }
+              
+              console.log('📧 Late arrival email data:', lateArrivalInfo)
+              
+              // Send late arrival email using the same function
+              await sendEarlyArrivalNotification(currentUser.value, {
+                scheduled_start: 'Late Clock In',
+                actual_start: new Date(now).toLocaleTimeString(),
+                early_minutes: Math.floor((new Date(now).getTime() - scheduledEnd.getTime()) / (1000 * 60)),
+                reason: reason
+              })
+              console.log('✅ Late arrival email sent successfully')
+            } catch (error) {
+              console.error('❌ Failed to send late arrival email:', error)
+            }
+          }
+        }
+        
+        // Start clock out alert timer
+        startClockOutAlert()
+      } else {
+        console.log('⚠️ No schedule found for today or missing start time')
+        console.log('⚠️ Cannot set up alerts without schedule')
+        console.log('ℹ️ Please set up your work schedule to enable email alerts')
+      }
     } else {
+      console.log('🔴 Clock Out - Ending session')
       currentClockInTime.value = null
       stopTimer()
+      
+      // Clear clock out alert timer when clocking out
+      if (clockOutAlertTimer) {
+        clearTimeout(clockOutAlertTimer)
+        clockOutAlertTimer = null
+      }
     }
     
     // Refresh data from the server in the background to ensure consistency
-    load().catch(err => console.error('Background refresh failed:', err))
-    loadCharts().catch(err => console.error('Charts refresh failed:', err))
+    // Add a small delay to ensure the server has processed the clock out
+    setTimeout(() => {
+      load().catch(err => console.error('Background refresh failed:', err))
+      loadCharts().catch(err => console.error('Charts refresh failed:', err))
+    }, 500)
   } catch (err) {
     console.error('🔴 Error toggling clock status:', err)
     console.error('🔴 Error details:', {
@@ -904,11 +1151,25 @@ const filterSessionsByDate = () => {
 }
 
 const switchToToday = () => {
-  console.log('🔵 Switching to today:', today)
-  selectedDate.value = today
-  chartsDate.value = today
-  sessionsDate.value = today
+  // Get fresh today's date in case day has changed
+  const freshToday = getTodayDate()
+  console.log('🔵 Switching to today:', freshToday)
+  selectedDate.value = freshToday
+  chartsDate.value = freshToday
+  sessionsDate.value = freshToday
   handleDateChange()
+}
+
+// Function to check if we need to update to today's date
+const checkAndUpdateToToday = () => {
+  const freshToday = getTodayDate()
+  if (selectedDate.value !== freshToday) {
+    console.log('🔵 Day has changed, updating to today:', freshToday)
+    selectedDate.value = freshToday
+    chartsDate.value = freshToday
+    sessionsDate.value = freshToday
+    handleDateChange()
+  }
 }
 
 const switchToDataDate = () => {
@@ -922,8 +1183,46 @@ const switchToDataDate = () => {
   }
 }
 
+// Load user schedules
+const loadUserSchedules = async () => {
+  try {
+    if (currentUserId.value) {
+      const response = await userSchedulesApi.listByUser(currentUserId.value)
+      userSchedules.value = response.data || []
+      console.log('User schedules loaded:', userSchedules.value)
+    }
+  } catch (error) {
+    console.error('Failed to load user schedules:', error)
+  }
+}
+
+// Test email function
+const testEmail = async () => {
+  console.log('🧪 TEST EMAIL BUTTON CLICKED')
+  try {
+    const testUser = {
+      first_name: 'Test',
+      last_name: 'User',
+      email: 'krish.bavarva114999@marwadiuniversity.ac.in'
+    }
+    const testArrivalInfo = {
+      scheduled_start: '09:00:00',
+      actual_start: new Date().toLocaleTimeString(),
+      early_minutes: 30,
+      reason: 'Manual test email - button clicked'
+    }
+    
+    console.log('📧 Sending test email...')
+    await sendEarlyArrivalNotification(testUser, testArrivalInfo)
+    console.log('✅ Test email sent successfully')
+  } catch (error) {
+    console.error('❌ Test email failed:', error)
+  }
+}
+
 onMounted(async () => {
   console.log('🔵 ClockinsView mounted')
+  console.log('🔵 Today date:', today)
   try {
     const userString = localStorage.getItem('currentUser')
     console.log('🔵 Raw user data from localStorage:', userString)
@@ -934,8 +1233,23 @@ onMounted(async () => {
     if (u?.id) {
       console.log('🔵 User ID found, setting currentUserId:', u.id)
       currentUserId.value = u.id
+      currentUser.value = u
+      
+      // Initialize dates to today - this should be respected
+      selectedDate.value = today
+      chartsDate.value = today
+      sessionsDate.value = today
+      console.log('🔵 Initialized dates to today:', today)
+      
       await load()
-      await loadCharts() // Load sessions and breaks data
+      await loadUserSchedules() // Load user schedules for alerts
+      
+      // Wait for DOM to ensure canvas elements are ready
+      await nextTick()
+      await loadCharts() // Load sessions and breaks data with charts
+      
+      // Set up periodic check for day changes (every 5 minutes)
+      dayCheckTimer = setInterval(checkAndUpdateToToday, 5 * 60 * 1000)
     } else {
       console.log('🔴 No user ID found in localStorage')
       error.value = 'User not authenticated. Please log in again.';
@@ -947,6 +1261,13 @@ onMounted(async () => {
     console.error('🔴 Failed to load user data:', e)
     error.value = 'Failed to load user data. Please refresh the page.'
   }
+})
+
+// Cleanup timers when component unmounts
+onUnmounted(() => {
+  if (timer) clearInterval(timer)
+  if (clockOutAlertTimer) clearTimeout(clockOutAlertTimer)
+  if (dayCheckTimer) clearInterval(dayCheckTimer)
 })
 </script>
 

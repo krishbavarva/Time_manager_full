@@ -5,7 +5,7 @@
         v-for="notification in notifications"
         :key="notification.id"
         :class="[
-          'max-w-sm w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden',
+          'notification-item max-w-2xl w-full bg-white dark:bg-gray-800 shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 overflow-hidden',
           getNotificationClasses(notification.type)
         ]"
       >
@@ -147,6 +147,16 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+.notification-item {
+  min-width: 450px;
+}
+
+@media (max-width: 640px) {
+  .notification-item {
+    min-width: 320px;
+  }
+}
+
 .notification-enter-active,
 .notification-leave-active {
   transition: all 0.3s ease;

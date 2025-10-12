@@ -13,6 +13,11 @@
             <RouterLink v-if="isAdmin" to="/admin/users" class="text-gray-700 hover:text-blue-600 font-medium">Users</RouterLink>
             <RouterLink v-if="isAdmin" to="/admin/teams" class="text-gray-700 hover:text-blue-600 font-medium">Admin Teams</RouterLink>
             <RouterLink v-if="isAdmin" to="/admin/attendance" class="text-gray-700 hover:text-blue-600 font-medium">Attendance</RouterLink>
+            <RouterLink v-if="isAdmin" to="/admin/salary" class="text-gray-700 hover:text-blue-600 font-medium">Salary</RouterLink>
+            <RouterLink v-if="isAdmin" to="/admin/complaints" class="text-gray-700 hover:text-blue-600 font-medium">Complaints</RouterLink>
+            <RouterLink v-if="isAdmin" to="/admin/leave-requests" class="text-gray-700 hover:text-blue-600 font-medium">Leave Requests</RouterLink>
+            <RouterLink v-if="!isAdmin" to="/my-leave-requests" class="text-gray-700 hover:text-blue-600 font-medium">My Leave Requests</RouterLink>
+            <RouterLink v-if="!isAdmin" to="/my-complaints" class="text-gray-700 hover:text-blue-600 font-medium">My Complaints</RouterLink>
             <RouterLink v-if="isManager && !isAdmin" to="/teams" class="text-gray-700 hover:text-blue-600 font-medium">Teams</RouterLink>
             <RouterLink v-if="isManager && !isAdmin" to="/manager/team" class="text-gray-700 hover:text-blue-600 font-medium">Team Members</RouterLink>
           </div>

@@ -9,10 +9,10 @@
             <p class="text-gray-600">View your overtime hours and manage your work schedule</p>
           </div>
           <button
-            @click="$router.push('/user-schedule')"
+            @click="$router.push('/user-schedule')"           
             class="px-4 py-2 text-sm font-medium text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100"
           >
-            📅 Set My Schedule
+            📅 Set My Schedule                                                                                                                                                                                                                                                                                                                                                                                                                  
           </button>
         </div>
       </div>

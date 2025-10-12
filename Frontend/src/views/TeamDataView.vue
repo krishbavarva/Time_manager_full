@@ -43,7 +43,7 @@
           <h2 class="text-xl font-semibold text-gray-900 mb-4">{{ teamData.team.description || 'Unnamed Team' }}</h2>
 
           <!-- Summary Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div class="bg-blue-50 p-4 rounded-lg">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
@@ -62,12 +62,26 @@
               <div class="flex items-center">
                 <div class="flex-shrink-0">
                   <svg class="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm font-medium text-green-800">Present Today</p>
+                  <p class="text-2xl font-semibold text-green-900">{{ todayPresentCount }}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="bg-orange-50 p-4 rounded-lg">
+              <div class="flex items-center">
+                <div class="flex-shrink-0">
+                  <svg class="h-6 w-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
                 <div class="ml-3">
-                  <p class="text-sm font-medium text-green-800">Total Hours</p>
-                  <p class="text-2xl font-semibold text-green-900">{{ totalTeamHours.toFixed(1) }}h</p>
+                  <p class="text-sm font-medium text-orange-800">Total Hours</p>
+                  <p class="text-2xl font-semibold text-orange-900">{{ totalTeamHours.toFixed(1) }}h</p>
                 </div>
               </div>
             </div>
@@ -100,6 +114,7 @@
                 <tr>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Today's Attendance</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Hours</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
                   <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -128,6 +143,16 @@
                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                       {{ memberData.employee.role }}
                     </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span 
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                      :class="getAttendanceStatusClass(memberData.attendanceStatus)">
+                      {{ getAttendanceStatusLabel(memberData.attendanceStatus) }}
+                    </span>
+                    <div v-if="memberData.attendanceTime" class="text-xs text-gray-500 mt-1">
+                      {{ memberData.attendanceTime }}
+                    </div>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                     {{ memberData.total_hours?.toFixed(1) || '0.0' }}h
@@ -194,13 +219,15 @@
 
 <script>
 import { teamsApi } from '@/api/teams'
+import { attendanceApi } from '@/api/attendance'
 
 export default {
   name: 'TeamDataView',
   data() {
     return {
       teamData: null,
-      loading: false
+      loading: false,
+      todayAttendance: []
     }
   },
   computed: {
@@ -214,6 +241,10 @@ export default {
     totalTeamSessions() {
       if (!this.teamData?.members_data) return 0
       return this.teamData.members_data.reduce((total, member) => total + (member.working_times?.length || 0), 0)
+    },
+    todayPresentCount() {
+      if (!this.teamData?.members_data) return 0
+      return this.teamData.members_data.filter(member => member.attendanceStatus === 'present').length
     },
     recentActivity() {
       if (!this.teamData?.members_data) return []
@@ -254,12 +285,81 @@ export default {
     async loadTeamData() {
       try {
         this.loading = true
-        this.teamData = await teamsApi.getTeamMemberData(this.teamId)
+        
+        // Load team basic data
+        const teamResponse = await teamsApi.get(this.teamId)
+        const team = teamResponse.data || teamResponse
+        
+        // Load today's attendance
+        await this.loadTodayAttendance()
+        
+        // Build members_data from employees
+        const membersData = (team.employees || []).map(employee => {
+          const attendance = this.todayAttendance.find(a => a.user_id === employee.id)
+          return {
+            employee: employee,
+            total_hours: 0, // Would need working times to calculate
+            working_times: [],
+            attendanceStatus: this.getAttendanceStatus(attendance),
+            attendanceTime: attendance ? new Date(attendance.inserted_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : null
+          }
+        })
+        
+        this.teamData = {
+          team: team,
+          members_data: membersData
+        }
       } catch (error) {
         console.error('Error loading team data:', error)
         this.$toast?.error('Failed to load team data')
       } finally {
         this.loading = false
+      }
+    },
+
+    async loadTodayAttendance() {
+      try {
+        const today = new Date().toISOString().split('T')[0]
+        const response = await attendanceApi.list()
+        this.todayAttendance = (response.data || []).filter(a => a.date === today)
+      } catch (error) {
+        console.error('Error loading attendance:', error)
+        this.todayAttendance = []
+      }
+    },
+
+    getAttendanceStatus(attendance) {
+      if (!attendance) return 'not_marked'
+      return attendance.status // 'present', 'absent', etc.
+    },
+
+    getAttendanceStatusClass(status) {
+      switch (status) {
+        case 'present':
+          return 'bg-green-100 text-green-800'
+        case 'absent':
+          return 'bg-red-100 text-red-800'
+        case 'on_leave':
+          return 'bg-yellow-100 text-yellow-800'
+        case 'not_marked':
+          return 'bg-gray-100 text-gray-600'
+        default:
+          return 'bg-gray-100 text-gray-600'
+      }
+    },
+
+    getAttendanceStatusLabel(status) {
+      switch (status) {
+        case 'present':
+          return '✓ Present'
+        case 'absent':
+          return '✗ Absent'
+        case 'on_leave':
+          return '📅 On Leave'
+        case 'not_marked':
+          return '- Not Marked'
+        default:
+          return '- Unknown'
       }
     },
 
