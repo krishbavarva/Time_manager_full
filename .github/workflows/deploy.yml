@@ -1,0 +1,39 @@
+name: Deploy to EC2 via rsync
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    name: Deploy to EC2
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Sync repository to EC2 (rsync)
+      uses: burnett01/rsync-deployments@v4
+      with:
+        switches: -az --delete --exclude '.git' --exclude 'node_modules'
+        path: .
+        remote_path: /home/${{ secrets.SSH_USER }}/time_manager_full
+        remote_host: ${{ secrets.SSH_HOST }}
+        remote_user: ${{ secrets.SSH_USER }}
+        remote_key: ${{ secrets.SSH_KEY }}
+
+    - name: Restart Docker Compose on server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_KEY }}
+        port: ${{ secrets.SSH_PORT }}
+        script: |
+          set -euo pipefail
+          cd /home/${{ secrets.SSH_USER }}/time_manager_full
+          # Ensure docker is running and pull any submodule changes
+          sudo systemctl enable --now docker || true
+          sudo /usr/local/bin/docker-compose down || true
+          sudo /usr/local/bin/docker-compose up -d --build
