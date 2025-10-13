@@ -1,0 +1,1 @@
+import{h as i}from"./http-8cebfae0.js";const n={listByUser:(o,r=null,p=null)=>{let s=`/api/clocks/${o}`;const t=new URLSearchParams;return r&&t.append("start",r),p&&t.append("end",p),t.toString()&&(s+="?"+t.toString()),i.get(s)},toggleForUser:(o,r={})=>i.post(`/api/clocks/${o}`,r)};export{n as clockinsApi};

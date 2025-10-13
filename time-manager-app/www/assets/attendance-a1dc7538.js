@@ -1,0 +1,1 @@
+import{h as e}from"./http-f1abb376.js";const p={list:()=>e.get("/api/attendance"),get:t=>e.get(`/api/attendance/${t}`),create:t=>e.post("/api/attendance",{attendance:t}),update:(t,a)=>e.put(`/api/attendance/${t}`,{attendance:a}),delete:t=>e.delete(`/api/attendance/${t}`)};export{p as attendanceApi};

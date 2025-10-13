@@ -1,0 +1,1 @@
+import{h as e}from"./http-f1abb376.js";const a={list(){return e.get("/api/complaints")},listByUser(t){return e.get(`/api/complaints/user/${t}`)},create(t){return e.post("/api/complaints",t)},update(t,p){return e.put(`/api/complaints/${t}`,p)},delete(t){return e.delete(`/api/complaints/${t}`)}};export{a as c};

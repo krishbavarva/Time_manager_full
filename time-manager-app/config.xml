@@ -14,8 +14,8 @@
     <content src="index.html" />
 
     <!-- Allow specific backend IP -->
-    <allow-navigation href="http://172.20.10.2:4000/*" />
-    <access origin="http://172.20.10.2:4000/*" />
+    <allow-navigation href="http://13.60.187.152:4000*" />
+    <access origin="http://13.60.187.152:4000*" />
     
     <!-- Allow all other connections (optional fallback) -->
     <access origin="*" />

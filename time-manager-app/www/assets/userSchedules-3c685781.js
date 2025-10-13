@@ -1,0 +1,1 @@
+import{h as s}from"./http-f1abb376.js";const t="/api/user_schedules",$={list:e=>s.get(`${t}?user_id=${e}`),listByUser:e=>s.get(`${t}/user/${e}`),getByUser:e=>s.get(`${t}/user/${e}`),get:e=>s.get(`${t}/${e}`),create:e=>s.post(t,{user_schedule:e}),update:(e,r)=>s.put(`${t}/${e}`,{user_schedule:r}),remove:e=>s.delete(`${t}/${e}`)};export{$ as userSchedulesApi};

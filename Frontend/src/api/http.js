@@ -4,7 +4,7 @@
 
 // Default to relative base URL so we can use Vite dev proxy to avoid CORS in development.
 // You can override with VITE_API_BASE_URL (e.g., production).
-const DEFAULT_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL) || ''
+const DEFAULT_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://13.60.187.152:4000' // <-- your backend IP and port
 
 const buildUrl = (path, query) => {
   const base = DEFAULT_BASE_URL.replace(/\/$/, '')
